@@ -1,0 +1,15 @@
+/* Глобальные стили */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  overflow-x: hidden; /* Предотвращаем горизонтальный скролл */
+}
+
+/* Предотвращаем выход контента за границы */
+html {
+  overflow-x: hidden;
+}

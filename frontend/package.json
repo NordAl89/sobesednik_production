@@ -1,0 +1,26 @@
+{
+  "name": "frontend",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare"
+  },
+  "dependencies": {
+    "@nuxt/image": "^1.11.0",
+    "@pinia/nuxt": "^0.11.3",
+    "axios": "^1.12.2",
+    "nuxt": "^3.5.0",
+    "nuxt-yandex-metrika": "^1.2.9",
+    "pinia": "^3.0.4",
+    "yandex-metrika-module-nuxt3": "^1.5.3"
+  },
+  "devDependencies": {
+    "@nuxtjs/seo": "^3.2.2",
+    "@nuxtjs/sitemap": "^7.4.9",
+    "@types/node": "^24.7.2"
+  }
+}

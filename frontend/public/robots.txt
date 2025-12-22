@@ -1,0 +1,15 @@
+User-Agent: *
+Allow: /
+Allow: /experts/
+Allow: /about
+Allow: /faq
+
+# Запрещаем индексацию служебных страниц
+Disallow: /admin-login
+Disallow: /expert-login
+Disallow: /expert-reset
+Disallow: /become-expert
+Disallow: /expert-profile/
+
+# Sitemap
+Sitemap: https://sobesednik-na-chas.ru/sitemap.xml
