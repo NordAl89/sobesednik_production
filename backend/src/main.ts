@@ -30,9 +30,6 @@ async function bootstrap() {
     transform: true,
   }));
 
-  // ✅ Устанавливаем глобальный префикс /api для всех маршрутов
-  app.setGlobalPrefix('api');
-
   // ✅ ВАЖНО: Статические файлы должны быть ПЕРЕД другими middleware
   // Путь должен быть абсолютным
   const uploadsDir = join(process.cwd(), 'uploads');
@@ -82,11 +79,11 @@ async function bootstrap() {
     console.error('❌ Ошибка запуска планировщика:', error);
   }
 
-  await app.listen(4000);
-  console.log('🚀 Server is running on http://localhost:4000');
-  console.log('📚 Swagger documentation: http://localhost:4000/api');
-  console.log('📁 Static files available at: http://localhost:4000/uploads/');
-  console.log('🖼️ Test image URL: http://localhost:4000/uploads/experts/7602887344/98b1751468f7c36f85c42868bbc44442.png');
+  await app.listen(process.env.PORT || 4000);
+  console.log(`🚀 Server is running on http://localhost:${process.env.PORT || 4000}`);
+  console.log(`📚 Swagger documentation: http://localhost:${process.env.PORT || 4000}/api`);
+  console.log(`📁 Static files available at: http://localhost:${process.env.PORT || 4000}/uploads/`);
+  console.log(`🖼️ Test image URL: http://localhost:${process.env.PORT || 4000}/uploads/experts/7602887344/98b1751468f7c36f85c42868bbc44442.png`);
 }
 
 bootstrap().catch(error => {
