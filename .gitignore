@@ -13,6 +13,12 @@ node_modules
 logs
 *.log
 
+# Runtime uploads
+backend/uploads/
+
+# Backups
+*.tar.gz
+
 # Misc
 .DS_Store
 .fleet
