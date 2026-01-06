@@ -83,6 +83,11 @@
         {{ page }}
       </button>
     </div> -->
+
+    <!-- Кнопка наверх -->
+    <button v-if="showScrollTopButton" class="scroll-top-btn" @click="scrollToTop" aria-label="Наверх">
+      ⬆
+    </button>
   </div>
 </template>
 
@@ -263,22 +268,23 @@ function goToPage(page) {
 }
 
 function handleScroll() {
-  if (!infiniteScrollEnabled.value) return;
+  const scrollTop = window.scrollY
+  const clientHeight = window.innerHeight
+  const scrollHeight = document.documentElement.scrollHeight
 
-  const scrollTop = window.scrollY;
-  const clientHeight = window.innerHeight;
-  const scrollHeight = document.documentElement.scrollHeight;
+  windowScrolled.value = scrollTop > 400
 
   if (
+    infiniteScrollEnabled.value &&
     scrollTop + clientHeight >= scrollHeight - 200 &&
     hasMoreExperts.value &&
     !isLoadingMore.value
   ) {
-    isLoadingMore.value = true;
+    isLoadingMore.value = true
     setTimeout(() => {
-      currentPage.value++;
-      isLoadingMore.value = false;
-    }, 600);
+      currentPage.value++
+      isLoadingMore.value = false
+    }, 600)
   }
 }
 
@@ -320,6 +326,18 @@ onMounted(() => {
 onUnmounted(() => {
   window.removeEventListener("scroll", handleScroll);
 });
+
+// Кнопка наверх
+const windowScrolled = ref(false)
+const showScrollTopButton = computed(() => {
+  return !hasMoreExperts.value && windowScrolled.value
+})
+function scrollToTop() {
+  window.scrollTo({
+    top: 0,
+    behavior: 'smooth'
+  })
+}
 
 // SEO block
 useHead({
@@ -544,7 +562,7 @@ body {
 
 .show-more button:disabled {
   opacity: 0.7;
- cursor: not-allowed;
+  cursor: not-allowed;
 }
 
 /* ---------- Пагинация ---------- */
@@ -589,6 +607,34 @@ body {
   border: 1px solid #6a50fc;
   font-size: 14px;
 }
+
+/*кнопка прокрутки вверх*/
+.scroll-top-btn {
+  position: fixed;
+  right: 20px;
+  bottom: 90px; /* чтобы не перекрывать "Показать ещё" */
+  font-size: 30px;        /* ⬅ крупнее */
+  font-weight: 700;       /* ⬅ визуальная масса */
+  line-height: 1;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: none;
+  background-color: #667eea;
+  color: #fff;
+  font-size: 22px;
+  cursor: pointer;
+  opacity: 0.85;
+  box-shadow: 0 6px 16px rgba(186, 172, 248, 0.25);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  z-index: 1000;
+}
+
+.scroll-top-btn:hover {
+  opacity: 1;
+  transform: translateY(-2px);
+}
+
 
 /* ==========================================================
    📱 АДАПТИВНОСТЬ
