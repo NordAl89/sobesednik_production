@@ -63,7 +63,7 @@
     </div>
 
     <!-- Кнопка "Показать ещё" -->
-    <div class="show-more">
+    <div class="show-more" ref="showMoreRef">
       <button @click="showMore" :disabled="!hasMoreExperts || isLoadingMore">
         <span v-if="isLoadingMore">Загрузка…</span>
         <span v-else-if="!hasMoreExperts">Все собеседники загружены</span>
@@ -71,7 +71,8 @@
       </button>
     </div>
 
-
+    <!-- ⬇️ НЕВИДИМЫЙ ЯКОРЬ -->
+    <div ref="scrollAnchor" class="scroll-anchor"></div>
     <!-- Нумерация страниц пока скрываем работает не корректно -->
     <!-- <div v-if="totalPages > 1" class="pagination">
       <button
@@ -85,9 +86,17 @@
     </div> -->
 
     <!-- Кнопка наверх -->
-    <button v-if="showScrollTopButton" class="scroll-top-btn" @click="scrollToTop" aria-label="Наверх">
-      ⬆
-    </button>
+   <Transition name="scroll-top-fade">
+  <button
+    v-if="showScrollTopButton"
+    class="scroll-top-btn"
+    :style="{ bottom: scrollTopButtonBottom + 'px' }"
+    @click="scrollToTop"
+    aria-label="Наверх"
+  >
+    ⬆
+  </button>
+</Transition>
   </div>
 </template>
 
@@ -286,7 +295,31 @@ function handleScroll() {
       isLoadingMore.value = false
     }, 600)
   }
+  updateScrollTopButtonPosition()
 }
+
+// Логика для кнопки прокрутки вверх
+const showMoreRef = ref(null)
+const scrollTopButtonBottom = ref(90) // дефолт
+const scrollAnchor = ref(null)
+
+function updateScrollTopButtonPosition() {
+  if (!scrollAnchor.value) return
+
+  const rect = scrollAnchor.value.getBoundingClientRect()
+  const offset = 20        // отступ от якоря
+  const buttonSize = 56    // высота кнопки
+
+  if (rect.top < window.innerHeight - buttonSize - offset) {
+    // якорь вошёл во viewport → поднимаем кнопку
+    scrollTopButtonBottom.value =
+      window.innerHeight - rect.top + offset
+  } else {
+    // обычное фиксированное положение
+    scrollTopButtonBottom.value = 90
+  }
+}
+
 
 onMounted(async () => {
   console.log("🏠 Главная страница загружена");
@@ -305,6 +338,8 @@ onMounted(async () => {
   if (store.experts.length > 0) {
     console.log("📋 Первый эксперт после синхронизации:", store.experts[0]);
   }
+
+  updateScrollTopButtonPosition()
 });
 
 // при изменении фильтров или поиска — сброс страницы
@@ -611,13 +646,16 @@ body {
 /*кнопка прокрутки вверх*/
 .scroll-top-btn {
   position: fixed;
-  right: 20px;
-  bottom: 90px; /* чтобы не перекрывать "Показать ещё" */
-  font-size: 30px;        /* ⬅ крупнее */
-  font-weight: 700;       /* ⬅ визуальная масса */
+  right: 1px;
+  bottom: 90px;
+  /* чтобы не перекрывать "Показать ещё" */
+  font-size: 30px;
+  /* ⬅ крупнее */
+  font-weight: 700;
+  /* ⬅ визуальная масса */
   line-height: 1;
-  width: 48px;
-  height: 48px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   border: none;
   background-color: #667eea;
@@ -635,7 +673,28 @@ body {
   transform: translateY(-2px);
 }
 
+/* Появление / исчезновение */
+.scroll-top-fade-enter-active,
+.scroll-top-fade-leave-active {
+  transition: opacity 1s ease, transform 1s ease;
+}
 
+.scroll-top-fade-enter-from,
+.scroll-top-fade-leave-to {
+  opacity: 0;
+  transform: translateY(8px) scale(0.9);
+}
+
+.scroll-top-fade-enter-to,
+.scroll-top-fade-leave-from {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+
+.scroll-anchor {
+  height: 1px;
+}
 /* ==========================================================
    📱 АДАПТИВНОСТЬ
    ========================================================== */
