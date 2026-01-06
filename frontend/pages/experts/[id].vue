@@ -103,7 +103,7 @@
     </div>
 
     <!-- Лайтбокс для изображений и видео -->
-    <div v-if="lightboxVisible" class="lightbox" @click="closeLightbox">
+    <div v-if="lightboxVisible" class="lightbox" @click="closeLightbox" @touchstart="onTouchStart" @touchend="onTouchEnd">
       <div class="lightbox-content" @click.stop>
         <button class="lightbox-close" @click="closeLightbox">×</button>
         <button class="lightbox-nav lightbox-prev" @click="prevItem">‹</button>
@@ -289,15 +289,6 @@ useHead({
   ]
 })
 
-// Лайтбокс состояния
-const lightboxVisible = ref(false)
-const currentLightboxIndex = ref(0)
-
-const currentLightboxItem = computed(() => {
-  if (!galleryUrls.value.length) return null
-  return galleryUrls.value[currentLightboxIndex.value]
-})
-
 
 // Показать модальное окно жалобы
 const complaintModalVisible = ref(false) // Состояние модального окна жалобы
@@ -355,6 +346,16 @@ const galleryUrls = computed(() => {
   return expert.value.galleryUrls
 })
 
+// Лайтбокс состояния
+const lightboxVisible = ref(false)
+const currentLightboxIndex = ref(0)
+
+const currentLightboxItem = computed(() => {
+  if (!galleryUrls.value.length) return null
+  return galleryUrls.value[currentLightboxIndex.value]
+})
+
+
 const currentLightboxUrl = computed(() => {
   if (!galleryUrls.value.length) return ''
   return galleryUrls.value[currentLightboxIndex.value]
@@ -381,6 +382,35 @@ const prevItem = () => {
     currentLightboxIndex.value === 0
       ? galleryUrls.value.length - 1
       : currentLightboxIndex.value - 1
+}
+
+//Lightbox swipe
+const touchStartX = ref(0)
+const touchStartY = ref(0)
+//Обработчики touch
+const onTouchStart = (e) => {
+  const touch = e.touches[0]
+  touchStartX.value = touch.clientX
+  touchStartY.value = touch.clientY
+}
+
+const onTouchEnd = (e) => {
+  const touch = e.changedTouches[0]
+
+  const deltaX = touch.clientX - touchStartX.value
+  const deltaY = touch.clientY - touchStartY.value
+
+  const absX = Math.abs(deltaX)
+  const absY = Math.abs(deltaY)
+
+  // ❗ реагируем только на горизонтальный свайп
+  if (absX > absY && absX > 40) {
+    if (deltaX < 0) {
+      nextItem()
+    } else {
+      prevItem()
+    }
+  }
 }
 
 // Функция для получения правильного URL изображения
@@ -967,6 +997,7 @@ onMounted(fetchExpert)
 
   object-fit: contain;
   border-radius: 8px;
+  touch-action: pan-y;
 }
 .rating-section {
   margin: 3rem 0;
