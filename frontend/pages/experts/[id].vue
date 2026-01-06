@@ -24,10 +24,10 @@
             </span>
           </div>
           <p class="rating-text"> <strong> {{ expert.rating.toFixed(1) }}</strong>
-           
+
           </p>
         </div>
-        
+
         <span v-if="expert.expertIsVerified" class="tag tag-is-verified">Данные подтверждены администарацией</span>
         <p><strong>Возраст:</strong> {{ expert.age }}</p>
         <!-- <p><strong>Пол:</strong> {{ expert.gender === 'male' ? 'Мужской' : 'Женский' }}</p> -->
@@ -92,32 +92,33 @@
     <div v-if="galleryUrls && galleryUrls.length" class="gallery">
       <h3>Галерея</h3>
       <div class="gallery-grid">
-        <div v-for="(url, idx) in galleryUrls" :key="idx" class="gallery-item">
-          <img v-if="isImage(url)" :src="getImageUrl(url)" :alt="`Фото ${idx + 1}`" @click="openLightbox(idx)" />
-          <video v-else controls :src="getImageUrl(url)" @click="handleVideoClick($event, url)">
-            Ваш браузер не поддерживает видео.
+        <div v-for="(url, idx) in galleryUrls" :key="idx" class="gallery-item" @click="openLightbox(idx)">
+          <img v-if="isImage(url)" :src="getImageUrl(url)" />
+          <video v-else muted>
+            <source :src="getImageUrl(url)" />
           </video>
         </div>
+
       </div>
     </div>
 
-    <!-- Лайтбокс для изображений -->
+    <!-- Лайтбокс для изображений и видео -->
     <div v-if="lightboxVisible" class="lightbox" @click="closeLightbox">
       <div class="lightbox-content" @click.stop>
         <button class="lightbox-close" @click="closeLightbox">×</button>
-        <button class="lightbox-nav lightbox-prev" @click="prevImage">‹</button>
-        <img :src="getImageUrl(currentLightboxUrl)" alt="Просмотр галереи" />
-        <button class="lightbox-nav lightbox-next" @click="nextImage">›</button>
-      </div>
-    </div>
+        <button class="lightbox-nav lightbox-prev" @click="prevItem">‹</button>
 
-    <!-- Простое модальное окно для видео -->
-    <div v-if="videoModalVisible" class="video-modal" @click="closeVideoModal">
-      <div class="video-modal-content" @click.stop>
-        <button class="video-modal-close" @click="closeVideoModal">×</button>
-        <video controls :src="getImageUrl(currentVideoUrl)" class="modal-video">
-          Ваш браузер не поддерживает видео.
-        </video>
+        <!-- Фото -->
+        <img v-if="isImage(currentLightboxItem)" :src="getImageUrl(currentLightboxItem)" class="lightbox-media" />
+
+        <!-- Видео -->
+        <div class="lightbox-media-wrapper">
+          <video v-if="!isImage(currentLightboxItem)" controls autoplay playsinline class="lightbox-video">
+            <source :src="getImageUrl(currentLightboxItem)" />
+          </video>
+        </div>
+
+        <button class="lightbox-nav lightbox-next" @click="nextItem">›</button>
       </div>
     </div>
 
@@ -220,20 +221,20 @@ const hoverRating = ref(0)
 const ratingStats = ref(null)
 
 // SEO и мета теги
-const seoTitle = computed(() => 
+const seoTitle = computed(() =>
   expert.value ? `${expert.value.name} - Собеседник | ${expert.value.age} лет | от ${expert.value.price}₽/час` : 'Собеседник'
 )
 
 const seoDescription = computed(() => {
   if (!expert.value) return 'Профессиональный собеседник для практики общения'
-  
+
   const characteristics = []
   if (expert.value.alwaysAvailable) characteristics.push('доступен 24/7')
   if (expert.value.adultTopics) characteristics.push('темы 18+')
   if (expert.value.noForbiddenTopics) characteristics.push('без ограничений тем')
-  
+
   const charString = characteristics.length ? ` (${characteristics.join(', ')})` : ''
-  
+
   return `${expert.value.name}, ${expert.value.age} лет - профессиональный собеседник от ${expert.value.price}₽/час. Рейтинг: ${expert.value.rating}/5${charString}. ${expert.value.about ? expert.value.about.slice(0, 100) + '...' : ''}`
 })
 
@@ -292,12 +293,14 @@ useHead({
 const lightboxVisible = ref(false)
 const currentLightboxIndex = ref(0)
 
-// Видео модал состояния  
-const videoModalVisible = ref(false)
-const currentVideoUrl = ref('')
-const complaintModalVisible = ref(false) // Состояние модального окна жалобы
+const currentLightboxItem = computed(() => {
+  if (!galleryUrls.value.length) return null
+  return galleryUrls.value[currentLightboxIndex.value]
+})
+
 
 // Показать модальное окно жалобы
+const complaintModalVisible = ref(false) // Состояние модального окна жалобы
 const showComplaintModal = () => {
   complaintModalVisible.value = true
 }
@@ -357,79 +360,32 @@ const currentLightboxUrl = computed(() => {
   return galleryUrls.value[currentLightboxIndex.value]
 })
 
-// Обработка клика по видео в галерее
-const handleVideoClick = (event, videoUrl) => {
-  // Предотвращаем стандартное поведение
-  event.preventDefault()
-  event.stopPropagation()
-  
-  // Останавливаем видео в галерее
-  const video = event.target
-  video.pause()
-  video.currentTime = 0
-  
-  // Открываем модальное окно
-  openVideoModal(videoUrl)
-}
-
-// Открыть модальное окно видео
-const openVideoModal = (videoUrl) => {
-  currentVideoUrl.value = videoUrl
-  videoModalVisible.value = true
-}
-
-// Закрыть модальное окно видео
-const closeVideoModal = () => {
-  videoModalVisible.value = false
-  currentVideoUrl.value = ''
-  // Останавливаем все видео при закрытии
-  setTimeout(() => {
-    const videos = document.querySelectorAll('video')
-    videos.forEach(v => v.pause())
-  }, 100)
-}
-
-
 
 const openLightbox = (index) => {
-  // Открываем лайтбокс только для изображений
-  if (isImage(galleryUrls.value[index])) {
-    currentLightboxIndex.value = index
-    lightboxVisible.value = true
-  }
+  currentLightboxIndex.value = index
+  lightboxVisible.value = true
 }
+
 
 const closeLightbox = () => {
   lightboxVisible.value = false
 }
 
-const nextImage = () => {
-  if (!galleryUrls.value.length) return
-  
-  let nextIndex = currentLightboxIndex.value
-  do {
-    nextIndex = (nextIndex + 1) % galleryUrls.value.length
-  } while (!isImage(galleryUrls.value[nextIndex]) && nextIndex !== currentLightboxIndex.value)
-  
-  currentLightboxIndex.value = nextIndex
+const nextItem = () => {
+  currentLightboxIndex.value =
+    (currentLightboxIndex.value + 1) % galleryUrls.value.length
 }
 
-const prevImage = () => {
-  if (!galleryUrls.value.length) return
-  
-  let prevIndex = currentLightboxIndex.value
-  do {
-    prevIndex = prevIndex === 0 ? galleryUrls.value.length - 1 : prevIndex - 1
-  } while (!isImage(galleryUrls.value[prevIndex]) && prevIndex !== currentLightboxIndex.value)
-  
-  currentLightboxIndex.value = prevIndex
+const prevItem = () => {
+  currentLightboxIndex.value =
+    currentLightboxIndex.value === 0
+      ? galleryUrls.value.length - 1
+      : currentLightboxIndex.value - 1
 }
-
-
 
 // Функция для получения правильного URL изображения
 const getImageUrl = (url) => {
-  const config = useRuntimeConfig() 
+  const config = useRuntimeConfig()
   if (!url) return null
   if (url.startsWith('http')) return url
   return config.public.fileBase + `${url}`
@@ -454,10 +410,10 @@ const goBack = () => router.push('/')
 // Получение данных эксперта с backend
 const fetchExpert = async () => {
   loading.value = true
-  const config = useRuntimeConfig() 
+  const config = useRuntimeConfig()
 
   try {
-    
+
     const id = route.params.id
     const response = await $fetch(`${config.public.apiBase}/experts/${id}`)
     expert.value = response
@@ -508,7 +464,7 @@ const getPercentage = (star) => {
 // Установка рейтинга
 const setRating = async (star) => {
   if (!expert.value) return
-  const config = useRuntimeConfig() 
+  const config = useRuntimeConfig()
   try {
     const response = await $fetch(`${config.public.apiBase}/experts/${expert.value.id}/rating`, {
       method: 'POST',
@@ -538,7 +494,7 @@ const setRating = async (star) => {
 // Загрузка статистики рейтинга
 const fetchRatingStats = async () => {
   if (!expert.value) return
-  const config = useRuntimeConfig() 
+  const config = useRuntimeConfig()
   try {
     const response = await $fetch(`${config.public.apiBase}/experts/${expert.value.id}/rating/stats`)
     ratingStats.value = response
@@ -581,7 +537,7 @@ const addReview = async () => {
     text: newReview.value.trim(),
     date: new Date().toLocaleString()
   }
-  const config = useRuntimeConfig() 
+  const config = useRuntimeConfig()
   try {
     await $fetch(`${config.public.apiBase}/experts/${expert.value.id}/reviews`, {
       method: 'POST',
@@ -613,7 +569,7 @@ const getTelegramLink = (username) => {
 
 const handleTelegramClick = async () => {
   if (!expert.value?.telegram) return
-  const config = useRuntimeConfig() 
+  const config = useRuntimeConfig()
   try {
     await $fetch(`${config.public.apiBase}/experts/${expert.value.id}/notify`, {
       method: 'POST',
@@ -928,7 +884,7 @@ onMounted(fetchExpert)
 
 .lightbox-close {
   position: absolute;
-  top: -50px;
+  top: 0;
   right: 0;
   background: none;
   border: none;
@@ -937,6 +893,7 @@ onMounted(fetchExpert)
   cursor: pointer;
   z-index: 1001;
   padding: 5px;
+  border: solid 1px rgb(85, 85, 85);
   border-radius: 50%;
   width: 40px;
   height: 40px;
@@ -973,11 +930,11 @@ onMounted(fetchExpert)
 }
 
 .lightbox-prev {
-  left: 20px;
+  left: 5px;
 }
 
 .lightbox-next {
-  right: 20px;
+  right: 5px;
 }
 
 .lightbox-media {
@@ -986,14 +943,31 @@ onMounted(fetchExpert)
   justify-content: center;
 }
 
-.lightbox-media img,
+/* .lightbox-media img,
 .lightbox-media video {
   max-width: 100%;
   max-height: 80vh;
   border-radius: 8px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+} */
+.lightbox-media-wrapper {
+  max-width: 95vw;
+  max-height: 85vh;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
+.lightbox-video {
+  width: 100%;
+  height: auto;
+  max-width: 95vw;
+  max-height: 85vh;
+
+  object-fit: contain;
+  border-radius: 8px;
+}
 .rating-section {
   margin: 3rem 0;
   padding: 2rem 0;
@@ -1621,7 +1595,7 @@ onMounted(fetchExpert)
   font-size: 1.5rem;
   font-weight: 600;
   color: #333;
-  
+
   text-align: end;
 }
 
@@ -1682,14 +1656,15 @@ onMounted(fetchExpert)
   /* Цвет контура */
   -webkit-text-stroke: 1px #999;
   /* Контур для звезд */
- 
+
 }
+
 .star-display .star-outline {
-  text-shadow: 
+  text-shadow:
     -1px -1px 0 #999,
-     1px -1px 0 #999,
-    -1px  1px 0 #999,
-     1px  1px 0 #999;
+    1px -1px 0 #999,
+    -1px 1px 0 #999,
+    1px 1px 0 #999;
   color: transparent;
 }
 
@@ -1709,7 +1684,7 @@ onMounted(fetchExpert)
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-stroke: 0;
- 
+
 }
 
 .star-display.full .star-fill {
@@ -1752,6 +1727,14 @@ onMounted(fetchExpert)
     font-size: 1.8rem;
   }
 
+  .lightbox-media-wrapper {
+    max-height: 75vh;
+  }
+
+  .lightbox-video {
+    max-height: 75vh;
+  }
+
 }
 
 @media (max-width: 375px) {
@@ -1769,5 +1752,4 @@ onMounted(fetchExpert)
     font-size: 1.1rem;
   }
 }
-
 </style>
