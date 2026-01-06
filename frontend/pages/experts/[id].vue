@@ -112,7 +112,7 @@
         <img v-if="isImage(currentLightboxItem)" :src="getImageUrl(currentLightboxItem)" class="lightbox-media" />
 
         <!-- Видео -->
-        <div class="lightbox-media-wrapper">
+        <div class="lightbox-media-wrapper" @click.stop>
           <video v-if="!isImage(currentLightboxItem)" controls autoplay playsinline class="lightbox-video">
             <source :src="getImageUrl(currentLightboxItem)" />
           </video>
@@ -953,6 +953,7 @@ onMounted(fetchExpert)
   align-items: center;
   justify-content: center;
   transition: background 0.3s ease;
+  
 }
 
 .lightbox-nav:hover {
@@ -997,7 +998,8 @@ onMounted(fetchExpert)
 
   object-fit: contain;
   border-radius: 8px;
-  touch-action: pan-y;
+  touch-action: auto;
+  pointer-events: auto;
 }
 .rating-section {
   margin: 3rem 0;
