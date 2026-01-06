@@ -3,56 +3,53 @@
     <div class="compact-hero">
       <div class="compact-hero-content">
         <p class="compact-hero-text">
-         Собеседник на час&nbsp;&mdash; место, где каждый может найти искреннего друга, поддержку&nbsp;и&nbsp;понимание.
+          Собеседник на час&nbsp;&mdash; место, где каждый может найти
+          искреннего друга, поддержку&nbsp;и&nbsp;понимание.
         </p>
       </div>
     </div>
 
     <!-- Поиск -->
     <div class="search-bar">
-      <input
-        type="text"
-        v-model="searchQuery"
-        placeholder="Поиск по имени, фамилии, логину, возрасту или Telegram..."
-      />
+      <input type="text" v-model="searchQuery"
+        placeholder="Поиск по имени, фамилии, логину, возрасту или Telegram..." />
     </div>
     <div class="top-bar">
-  <!-- Сортировка -->
-  <div class="sort-bar">
-    <label>
-      Сортировка:
-      <select v-model="sortOption">
-        <option value="">Без сортировки</option>
-        <option
-          v-for="option in sortOptions"
-          :key="option.value"
-          :value="option.value"
-        >
-          {{ option.label }}
-        </option>
-      </select>
-    </label>
-  </div>
+      <!-- Сортировка -->
+      <div class="sort-bar">
+        <label>
+          Сортировка:
+          <select v-model="sortOption">
+            <option value="">Без сортировки</option>
+            <option v-for="option in sortOptions" :key="option.value" :value="option.value">
+              {{ option.label }}
+            </option>
+          </select>
+        </label>
+      </div>
 
-  <!-- Кнопка раскрытия фильтров -->
-  <button class="filter-toggle" @click="filtersOpen = !filtersOpen">
-    Фильтры
-    <span v-if="!filtersOpen">▼</span>
-    <span v-else>▲</span>
-  </button>
-</div>
+      <!-- Кнопка раскрытия фильтров -->
+      <button class="filter-toggle" @click="filtersOpen = !filtersOpen">
+        Фильтры
+        <span v-if="!filtersOpen">▼</span>
+        <span v-else>▲</span>
+      </button>
+    </div>
 
-<!-- Сами фильтры, скрываем/открываем -->
-<div class="filters" :class="{ open: filtersOpen }">
-  <label><input type="checkbox" v-model="filters.male" /> Мужчины</label>
-  <label><input type="checkbox" v-model="filters.female" /> Женщины</label>
-  <label><input type="checkbox" v-model="filters.adultTopics" /> Есть темы 18+</label>
-  <label><input type="checkbox" v-model="filters.noForbidden" /> Нет запрещённых тем</label>
-  <label><input type="checkbox" v-model="filters.freeNow" /> Сейчас свободен</label>
-  <label><input type="checkbox" v-model="filters.alwaysAvailable" /> 24/7</label>
-  <label><input type="checkbox" v-model="filters.expertIsVerified" /> Подтверждённый собеседник</label>
-</div>
-
+    <!-- Сами фильтры, скрываем/открываем -->
+    <div class="filters" :class="{ open: filtersOpen }">
+      <label><input type="checkbox" v-model="filters.male" /> Мужчины</label>
+      <label><input type="checkbox" v-model="filters.female" /> Женщины</label>
+      <label><input type="checkbox" v-model="filters.adultTopics" /> Есть темы
+        18+</label>
+      <label><input type="checkbox" v-model="filters.noForbidden" /> Нет запрещённых
+        тем</label>
+      <label><input type="checkbox" v-model="filters.freeNow" /> Сейчас
+        свободен</label>
+      <label><input type="checkbox" v-model="filters.alwaysAvailable" /> 24/7</label>
+      <label><input type="checkbox" v-model="filters.expertIsVerified" />
+        Подтверждённый собеседник</label>
+    </div>
 
     <h1>Собеседник на час</h1>
 
@@ -61,24 +58,22 @@
 
     <!-- Список экспертов -->
     <div v-else class="experts-list">
-      <ExpertCardMini
-        v-for="expert in paginatedExperts"
-        :key="expert.id"
-        :expert="expert"
-        @click="goToExpert(expert.id)"
-      />
+      <ExpertCardMini v-for="expert in paginatedExperts" :key="expert.id" :expert="expert"
+        @click="goToExpert(expert.id)" />
     </div>
 
     <!-- Кнопка "Показать ещё" -->
-    <div v-if="hasMoreExperts && !infiniteScrollEnabled" class="show-more">
-  <button @click="showMore" :disabled="isLoadingMore">
-    {{ isLoadingMore ? 'Загрузка...' : 'Показать ещё' }}
-  </button>
-</div>
+    <div class="show-more">
+      <button @click="showMore" :disabled="!hasMoreExperts || isLoadingMore">
+        <span v-if="isLoadingMore">Загрузка…</span>
+        <span v-else-if="!hasMoreExperts">Все собеседники загружены</span>
+        <span v-else>Показать ещё</span>
+      </button>
+    </div>
 
 
-    <!-- Нумерация страниц -->
-    <div v-if="totalPages > 1" class="pagination">
+    <!-- Нумерация страниц пока скрываем работает не корректно -->
+    <!-- <div v-if="totalPages > 1" class="pagination">
       <button
         v-for="page in totalPages"
         :key="page"
@@ -87,65 +82,70 @@
       >
         {{ page }}
       </button>
-    </div>
+    </div> -->
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
-import { useExpertsStore } from '~/stores/expertsStore'
-import { useRouter } from 'vue-router'
+import { ref, computed, onMounted, watch } from "vue";
+import { useExpertsStore } from "~/stores/expertsStore";
+import { useRouter } from "vue-router";
 
-const store = useExpertsStore()
-const router = useRouter()
+const store = useExpertsStore();
+const router = useRouter();
 
 // SEO для главной страницы
 useSeoMeta({
-  title: 'Собеседник на час - Найдите идеального собеседника для общения',
-  description: 'Профессиональные собеседники для доверительного общения. Выберите эксперта по возрасту, полу, интересам и стоимости. Доступны 24/7, темы 18+, без ограничений.',
-  keywords: 'собеседник, общение, психология, поддержка, разговор, онлайн, консультация',
-  ogTitle: 'Собеседник на час - Профессиональное общение',
-  ogDescription: 'Найдите идеального собеседника для доверительного общения. Профессиональные эксперты готовы выслушать и поддержать.',
-  ogType: 'website',
-  ogUrl: 'https://sobesednik-na-chas.ru',
-  ogImage: '/images/og-image.jpg',
-  twitterCard: 'summary_large_image',
-  twitterTitle: 'Собеседник на час - Профессиональное общение',
-  twitterDescription: 'Найдите идеального собеседника для доверительного общения',
-  twitterImage: '/images/twitter-image.jpg'
-})
+  title: "Собеседник на час - Найдите идеального собеседника для общения",
+  description:
+    "Профессиональные собеседники для доверительного общения. Выберите эксперта по возрасту, полу, интересам и стоимости. Доступны 24/7, темы 18+, без ограничений.",
+  keywords:
+    "собеседник, общение, психология, поддержка, разговор, онлайн, консультация",
+  ogTitle: "Собеседник на час - Профессиональное общение",
+  ogDescription:
+    "Найдите идеального собеседника для доверительного общения. Профессиональные эксперты готовы выслушать и поддержать.",
+  ogType: "website",
+  ogUrl: "https://sobesednik-na-chas.ru",
+  ogImage: "/images/og-image.jpg",
+  twitterCard: "summary_large_image",
+  twitterTitle: "Собеседник на час - Профессиональное общение",
+  twitterDescription:
+    "Найдите идеального собеседника для доверительного общения",
+  twitterImage: "/images/twitter-image.jpg",
+});
 
 // Структурированные данные для главной страницы
 useHead({
   script: [
     {
-      type: 'application/ld+json',
+      type: "application/ld+json",
       innerHTML: JSON.stringify({
         "@context": "https://schema.org",
         "@type": "WebSite",
-        "name": "Собеседник на час",
-        "description": "Платформа для поиска профессиональных собеседников",
-        "url": "https://sobesednik-na-chas.ru",
-        "potentialAction": {
+        name: "Собеседник на час",
+        description: "Платформа для поиска профессиональных собеседников",
+        url: "https://sobesednik-na-chas.ru",
+        potentialAction: {
           "@type": "SearchAction",
-          "target": {
+          target: {
             "@type": "EntryPoint",
-            "urlTemplate": "https://sobesednik-na-chas.ru?search={search_term_string}"
+            urlTemplate:
+              "https://sobesednik-na-chas.ru?search={search_term_string}",
           },
-          "query-input": "required name=search_term_string"
+          "query-input": "required name=search_term_string",
         },
-        "provider": {
+        provider: {
           "@type": "Organization",
-          "name": "Собеседник на час",
-          "url": "https://sobesednik-na-chas.ru"
-        }
-      })
-    }
-  ]
-})
+          name: "Собеседник на час",
+          url: "https://sobesednik-na-chas.ru",
+        },
+      }),
+    },
+  ],
+});
 
 // состояние
-const searchQuery = ref('')
+const searchQuery = ref("");
 const filters = ref({
   male: false,
   female: false,
@@ -154,192 +154,236 @@ const filters = ref({
   freeNow: false,
   alwaysAvailable: false,
   expertIsVerified: false,
-})
-const expertsPerPage = 10
-const currentPage = ref(1)
-const isLoadingMore = ref(false)
+});
+const expertsPerPage = 10;
+const currentPage = ref(1);
+const isLoadingMore = ref(false);
 
 // фильтрация
-const filtersOpen = ref(false)  // состояние открытия фильтров
+const filtersOpen = ref(false); // состояние открытия фильтров
 
 const filteredExperts = computed(() => {
-  return store.experts.filter(expert => {
-    if (expert.status === 'pending') return false
-    if (expert.status === 'expired') return false // Исключаем истекшие анкеты из поиска
+  return store.experts.filter((expert) => {
+    if (expert.status === "pending") return false;
+    if (expert.status === "expired") return false; // Исключаем истекшие анкеты из поиска
 
-    const query = searchQuery.value.toLowerCase()
-    const fullName = `${expert.name || ''} ${expert.surname || ''}`.toLowerCase()
-    const login = (expert.login || '').toLowerCase()
-    const age = expert.age ? expert.age.toString() : ''
-    const telegram = (expert.telegram || '').toLowerCase()
+    const query = searchQuery.value.toLowerCase();
+    const fullName = `${expert.name || ""} ${expert.surname || ""
+      }`.toLowerCase();
+    const login = (expert.login || "").toLowerCase();
+    const age = expert.age ? expert.age.toString() : "";
+    const telegram = (expert.telegram || "").toLowerCase();
 
     const matchesSearch =
       fullName.includes(query) ||
       login.includes(query) ||
       age.includes(query) ||
-      telegram.includes(query)
+      telegram.includes(query);
 
-    if (!matchesSearch) return false
-    if (filters.value.male && expert.gender !== 'male') return false
-    if (filters.value.female && expert.gender !== 'female') return false
-    if (filters.value.adultTopics && !expert.adultTopics) return false
-    if (filters.value.noForbidden && !expert.noForbiddenTopics) return false
-    if (filters.value.freeNow && expert.availability !== 'Свободен') return false
-    if (filters.value.alwaysAvailable && !expert.alwaysAvailable) return false
-    if (filters.value.expertIsVerified && !expert.expertIsVerified) return false
+    if (!matchesSearch) return false;
+    if (filters.value.male && expert.gender !== "male") return false;
+    if (filters.value.female && expert.gender !== "female") return false;
+    if (filters.value.adultTopics && !expert.adultTopics) return false;
+    if (filters.value.noForbidden && !expert.noForbiddenTopics) return false;
+    if (filters.value.freeNow && expert.availability !== "Свободен")
+      return false;
+    if (filters.value.alwaysAvailable && !expert.alwaysAvailable) return false;
+    if (filters.value.expertIsVerified && !expert.expertIsVerified)
+      return false;
 
-    return true
-  })
-})
+    return true;
+  });
+});
 
-const sortOption = ref('') // текущая сортировка: '', 'rating', 'reviews', 'new', 'old'
+const sortOption = ref(""); // текущая сортировка: '', 'rating', 'reviews', 'new', 'old'
 
 const sortOptions = [
-  { label: 'Высокий рейтинг', value: 'rating' },
-  { label: 'Количество отзывов', value: 'reviews' },
-  { label: 'Сначала новые', value: 'new' },
-  { label: 'Сначала старые', value: 'old' }
-]
+  { label: "Высокий рейтинг", value: "rating" },
+  { label: "Количество отзывов", value: "reviews" },
+  { label: "Сначала новые", value: "new" },
+  { label: "Сначала старые", value: "old" },
+];
 
 const sortedExperts = computed(() => {
   // создаём копию массива, чтобы не мутировать store.experts
-  const experts = [...filteredExperts.value]
+  const experts = [...filteredExperts.value];
 
   switch (sortOption.value) {
-    case 'rating':
-      return experts.sort((a, b) => (b.rating || 0) - (a.rating || 0))
-    case 'reviews':
+    case "rating":
+      return experts.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+    case "reviews":
       return experts.sort((a, b) => {
         // Используем reviewsCount если он есть, иначе считаем длину массива reviews
-        const reviewsCountA = a.reviewsCount || (Array.isArray(a.reviews) ? a.reviews.length : 0)
-        const reviewsCountB = b.reviewsCount || (Array.isArray(b.reviews) ? b.reviews.length : 0)
-        return reviewsCountB - reviewsCountA // от большего к меньшему
-      })
-    case 'new':
-      return experts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-    case 'old':
-      return experts.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
+        const reviewsCountA =
+          a.reviewsCount || (Array.isArray(a.reviews) ? a.reviews.length : 0);
+        const reviewsCountB =
+          b.reviewsCount || (Array.isArray(b.reviews) ? b.reviews.length : 0);
+        return reviewsCountB - reviewsCountA; // от большего к меньшему
+      });
+    case "new":
+      return experts.sort(
+        (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+      );
+    case "old":
+      return experts.sort(
+        (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
+      );
     default:
-      return experts
+      return experts;
   }
-})
+});
 
 // страничная логика
-const totalPages = computed(() => Math.ceil(sortedExperts.value.length / expertsPerPage))
-const paginatedExperts = computed(() => sortedExperts.value.slice(0, currentPage.value * expertsPerPage))
-const hasMoreExperts = computed(() => paginatedExperts.value.length < sortedExperts.value.length)
-const infiniteScrollEnabled = ref(false)
+const totalPages = computed(() =>
+  Math.ceil(sortedExperts.value.length / expertsPerPage)
+);
+const paginatedExperts = computed(() =>
+  sortedExperts.value.slice(0, currentPage.value * expertsPerPage)
+);
+const hasMoreExperts = computed(
+  () => paginatedExperts.value.length < sortedExperts.value.length
+);
+const infiniteScrollEnabled = ref(false);
 
 function showMore() {
-  if (!hasMoreExperts.value) return
+  if (!hasMoreExperts.value || isLoadingMore.value) return
+
   isLoadingMore.value = true
 
   setTimeout(() => {
     currentPage.value++
-
-    // Включаем бесконечный скролл после первого клика
     infiniteScrollEnabled.value = true
-
     isLoadingMore.value = false
   }, 600)
 }
 
-
 function goToPage(page) {
-  currentPage.value = page
-  window.scrollTo({ top: 0, behavior: 'smooth' })
+  currentPage.value = page;
+  window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
 function handleScroll() {
-  if (!infiniteScrollEnabled.value) return
+  if (!infiniteScrollEnabled.value) return;
 
-  const scrollTop = window.scrollY
-  const clientHeight = window.innerHeight
-  const scrollHeight = document.documentElement.scrollHeight
+  const scrollTop = window.scrollY;
+  const clientHeight = window.innerHeight;
+  const scrollHeight = document.documentElement.scrollHeight;
 
   if (
     scrollTop + clientHeight >= scrollHeight - 200 &&
     hasMoreExperts.value &&
     !isLoadingMore.value
   ) {
-    isLoadingMore.value = true
+    isLoadingMore.value = true;
     setTimeout(() => {
-      currentPage.value++
-      isLoadingMore.value = false
-    }, 600)
+      currentPage.value++;
+      isLoadingMore.value = false;
+    }, 600);
   }
 }
 
-
-
 onMounted(async () => {
-  console.log('🏠 Главная страница загружена');
+  console.log("🏠 Главная страница загружена");
   console.log(`📊 Экспертов в store ДО синхронизации: ${store.experts.length}`);
-  
+
   if (store.experts.length > 0) {
-    console.log('📋 Первый эксперт:', store.experts[0]);
+    console.log("📋 Первый эксперт:", store.experts[0]);
   }
-  
-  await store.syncWithServer()
-  
-  console.log(`📊 Экспертов в store ПОСЛЕ синхронизации: ${store.experts.length}`);
-  
+
+  await store.syncWithServer();
+
+  console.log(
+    `📊 Экспертов в store ПОСЛЕ синхронизации: ${store.experts.length}`
+  );
+
   if (store.experts.length > 0) {
-    console.log('📋 Первый эксперт после синхронизации:', store.experts[0]);
+    console.log("📋 Первый эксперт после синхронизации:", store.experts[0]);
   }
-})
+});
 
 // при изменении фильтров или поиска — сброс страницы
-watch([searchQuery, filters], () => {
-  currentPage.value = 1
-})
+watch(
+  [searchQuery, filters],
+  () => {
+    currentPage.value = 1;
+  },
+  { deep: true }
+);
 
-const goToExpert = (id) => router.push(`/experts/${id}`)
+const goToExpert = (id) => router.push(`/experts/${id}`);
 
 // Бесконечный скролл
 onMounted(() => {
-  window.addEventListener('scroll', handleScroll, { passive: true })
-})
+  window.addEventListener("scroll", handleScroll, { passive: true });
+});
 
 onUnmounted(() => {
-  window.removeEventListener('scroll', handleScroll)
-})
+  window.removeEventListener("scroll", handleScroll);
+});
 
 // SEO block
 useHead({
-  title: 'Найдите понимающего собеседника онлайн | Собеседник на час',
+  title: "Найдите понимающего собеседника онлайн | Собеседник на час",
 
   meta: [
-    { 
-      name: 'description', 
-      content: 'Сервис подбора проверенных собеседников для душевной беседы. Общайтесь анонимно по аудио, видео или в чате на любые темы. Выговоритесь и получите поддержку.' 
+    {
+      name: "description",
+      content:
+        "Сервис подбора проверенных собеседников для душевной беседы. Общайтесь анонимно по аудио, видео или в чате на любые темы. Выговоритесь и получите поддержку.",
     },
-    { property: 'og:title', content: 'Собеседник на час — приватное общение с понимающим человеком' },
-    { property: 'og:description', content: 'Вы не одны. Найдите собеседника, который готов выслушать и поддержать.' },
-    { property: 'og:image', content: 'https://sobesednik-na-chas.ru/images/og-main.jpg' },
-    { property: 'og:url', content: 'https://sobesednik-na-chas.ru/' },
-    { property: 'og:type', content: 'website' },
-    { property: 'og:locale', content: 'ru_RU' },
-    { property: 'og:site_name', content: 'Собеседник на час' },
-    { name: 'twitter:card', content: 'summary_large_image' },
-    { name: 'twitter:title', content: 'Найдите понимающего собеседника онлайн | Собеседник на час' },
-    { name: 'twitter:description', content: 'Анонимные доверительные беседы с понимающими собеседниками.' },
-    { name: 'twitter:image', content: 'https://sobesednik-na-chas.ru/images/twitter-main.jpg' },
-    { name: 'robots', content: 'index, follow, max-image-preview:large' },
-    { name: 'keywords', content: 'собеседник, поговорить, поддержка, слушатель, доверительная беседа, анонимный разговор, онлайн общение' },
-    { name: 'yandex-verification', content: '593746f54fd88b0d' }
+    {
+      property: "og:title",
+      content: "Собеседник на час — приватное общение с понимающим человеком",
+    },
+    {
+      property: "og:description",
+      content:
+        "Вы не одны. Найдите собеседника, который готов выслушать и поддержать.",
+    },
+    {
+      property: "og:image",
+      content: "https://sobesednik-na-chas.ru/images/og-main.jpg",
+    },
+    { property: "og:url", content: "https://sobesednik-na-chas.ru/" },
+    { property: "og:type", content: "website" },
+    { property: "og:locale", content: "ru_RU" },
+    { property: "og:site_name", content: "Собеседник на час" },
+    { name: "twitter:card", content: "summary_large_image" },
+    {
+      name: "twitter:title",
+      content: "Найдите понимающего собеседника онлайн | Собеседник на час",
+    },
+    {
+      name: "twitter:description",
+      content: "Анонимные доверительные беседы с понимающими собеседниками.",
+    },
+    {
+      name: "twitter:image",
+      content: "https://sobesednik-na-chas.ru/images/twitter-main.jpg",
+    },
+    { name: "robots", content: "index, follow, max-image-preview:large" },
+    {
+      name: "keywords",
+      content:
+        "собеседник, поговорить, поддержка, слушатель, доверительная беседа, анонимный разговор, онлайн общение",
+    },
+    { name: "yandex-verification", content: "593746f54fd88b0d" },
   ],
 
   link: [
-    { rel: 'canonical', href: 'https://sobesednik-na-chas.ru/' },
-    { rel: 'preload', as: 'image', href: 'https://sobesednik-na-chas.ru/images/og-main.jpg', fetchpriority: 'high' }
-  ],  
+    { rel: "canonical", href: "https://sobesednik-na-chas.ru/" },
+    {
+      rel: "preload",
+      as: "image",
+      href: "https://sobesednik-na-chas.ru/images/og-main.jpg",
+      fetchpriority: "high",
+    },
+  ],
 
   htmlAttrs: {
-    lang: 'ru'
-  }
-})
-
+    lang: "ru",
+  },
+});
 </script>
 
 <style scoped>
@@ -387,6 +431,7 @@ body {
   margin: 20px 0;
   text-align: center;
 }
+
 .search-bar input {
   width: 100%;
   max-width: 400px;
@@ -396,6 +441,7 @@ body {
   font-size: 0.95rem;
   transition: 0.2s;
 }
+
 .search-bar input:focus {
   border-color: #667eea;
   outline: none;
@@ -409,6 +455,7 @@ body {
   justify-content: center;
   margin-bottom: 20px;
 }
+
 .filters label {
   display: flex;
   align-items: center;
@@ -420,6 +467,7 @@ body {
   cursor: pointer;
   transition: background 0.2s;
 }
+
 .filters label:hover {
   background: #eee;
 }
@@ -460,10 +508,10 @@ body {
 
 /* Когда фильтры открыты */
 .filters.open {
-  max-height: 500px; /* достаточно для всех фильтров */
+  max-height: 500px;
+  /* достаточно для всех фильтров */
   opacity: 1;
 }
-
 
 /* ---------- Сетка карточек ---------- */
 .experts-list {
@@ -478,6 +526,7 @@ body {
   text-align: center;
   margin-top: 20px;
 }
+
 .show-more button {
   padding: 10px 18px;
   background-color: #667eea;
@@ -488,12 +537,14 @@ body {
   font-size: 0.95rem;
   transition: background 0.3s;
 }
+
 .show-more button:hover {
   background-color: #556cd6;
 }
+
 .show-more button:disabled {
   opacity: 0.7;
-  cursor: default;
+ cursor: not-allowed;
 }
 
 /* ---------- Пагинация ---------- */
@@ -504,6 +555,7 @@ body {
   margin: 20px 0;
   flex-wrap: wrap;
 }
+
 .pagination button {
   background: #f0f0f0;
   border: none;
@@ -512,9 +564,11 @@ body {
   cursor: pointer;
   transition: 0.3s;
 }
+
 .pagination button:hover {
   background: #dcdcdc;
 }
+
 .pagination button.active {
   background: #667eea;
   color: white;
@@ -536,7 +590,6 @@ body {
   font-size: 14px;
 }
 
-
 /* ==========================================================
    📱 АДАПТИВНОСТЬ
    ========================================================== */
@@ -552,7 +605,7 @@ body {
     margin-bottom: 20px;
     border-radius: 8px;
   }
-  
+
   .compact-hero-text {
     font-size: 0.9rem;
     line-height: 1.4;
@@ -581,7 +634,7 @@ body {
     gap: 6px;
     margin-bottom: 15px;
   }
-  
+
   .filters label {
     font-size: 12px;
     padding: 5px 8px;
@@ -670,7 +723,7 @@ body {
     grid-template-columns: repeat(3, 1fr);
     gap: 18px;
   }
-  
+
   .filters {
     justify-content: center;
   }
@@ -698,7 +751,7 @@ body {
     grid-template-columns: repeat(5, 1fr);
     gap: 22px;
   }
-  
+
   .page-container {
     max-width: 1600px;
   }
@@ -708,4 +761,3 @@ body {
   }
 }
 </style>
-
