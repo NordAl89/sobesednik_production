@@ -126,7 +126,7 @@
     <div class="rating-section">
 
       <!-- Форма для добавления оценки, рейтинга -->
-      <div class="rating-input">
+      <!-- <div class="rating-input">
         <h4>Поставить оценку</h4>
         <div class="stars-input">
           <span v-for="star in 5" :key="star" class="star-input" :class="{
@@ -139,7 +139,7 @@
         <p v-if="currentRating > 0" class="selected-rating">
           Вы поставили: {{ currentRating }} ★
         </p>
-      </div>
+      </div> -->
 
       <!-- Детальная статистика рейтинга -->
       <!-- <div v-if="ratingStats" class="rating-stats">
