@@ -168,7 +168,7 @@
     <!-- Отзывы -->
     <div class="reviews">
       <h3>Отзывы</h3>
-
+      <!-- <ReviewsList :expertId="expert.id" /> -->
       <!-- Форма добавления отзыва -->
       <div class="review-input-container">
         <textarea v-model="newReview" @input="handleReviewInput" placeholder="Напишите отзыв (минимум 6 символов)..."
@@ -207,7 +207,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from '#app'
-
+import ReviewsList from '~/components/reviews/ReviewsList.vue'
 const route = useRoute()
 const router = useRouter()
 
