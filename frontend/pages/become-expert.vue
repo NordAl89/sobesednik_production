@@ -524,11 +524,35 @@ const handleSubmit = async () => {
           // Извлекаем относительный путь из полного URL
           const fullUrl = preview.url
           const fileBase = config.public.fileBase
-          if (fullUrl.startsWith(fileBase)) {
-            return fullUrl.substring(fileBase.length)
+          
+          // Нормализуем fileBase (убираем trailing slash)
+          const normalizedFileBase = fileBase.endsWith('/') ? fileBase.slice(0, -1) : fileBase
+          
+          // Извлекаем относительный путь
+          if (fullUrl.startsWith(normalizedFileBase)) {
+            let relativePath = fullUrl.substring(normalizedFileBase.length)
+            // Убеждаемся, что путь начинается с /
+            if (!relativePath.startsWith('/')) {
+              relativePath = '/' + relativePath
+            }
+            return relativePath
           }
-          return fullUrl.replace(fileBase, '')
+          
+          // Если URL уже относительный, возвращаем как есть
+          if (fullUrl.startsWith('/')) {
+            return fullUrl
+          }
+          
+          // Последняя попытка - ищем /uploads/ в URL
+          const uploadsIndex = fullUrl.indexOf('/uploads/')
+          if (uploadsIndex !== -1) {
+            return fullUrl.substring(uploadsIndex)
+          }
+          
+          console.warn('⚠️ Не удалось извлечь относительный путь из:', fullUrl)
+          return fullUrl
         })
+        .filter(url => url) // Убираем пустые значения
 
       // Добавляем список оставшихся URL-ов в FormData
       formData.append('remainingGalleryUrls', JSON.stringify(remainingExistingUrls))
