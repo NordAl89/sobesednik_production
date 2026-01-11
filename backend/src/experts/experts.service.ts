@@ -330,8 +330,8 @@ private async moveFilesToExpertFolder(
       safeUpdateData.status = this.getValidStatus(safeUpdateData.status);
     }
 
-    // Хешируем пароль если он передан
-    if (password) {
+    // Хешируем пароль если он передан (проверяем что это не пустая строка)
+    if (password && typeof password === 'string' && password.trim() !== '') {
       expert.password = await bcrypt.hash(password, 10);
       console.log('🔐 Пароль обновлен и захеширован');
     }
