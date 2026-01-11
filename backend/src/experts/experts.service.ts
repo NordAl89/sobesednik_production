@@ -161,8 +161,8 @@ async createWithFiles(
 // Вспомогательный метод для перемещения файлов в папку эксперта
 private async moveFilesToExpertFolder(
   expertId: string,
-  mainPhoto: Express.Multer.File,
-  galleryFiles: Express.Multer.File[],
+  mainPhoto?: Express.Multer.File | null,
+  galleryFiles?: Express.Multer.File[] | null,
 ): Promise<{ fs: any; path: any }> {
   const fs = await import('fs/promises');
   const path = await import('path');
@@ -324,10 +324,16 @@ private async moveFilesToExpertFolder(
 
   async update(id: string, updateData: any): Promise<Expert> {
     const expert = await this.findOne(id);
-    const { id: _, login: __, ...safeUpdateData } = updateData;
+    const { id: _, login: __, password, ...safeUpdateData } = updateData;
 
     if (safeUpdateData.status) {
       safeUpdateData.status = this.getValidStatus(safeUpdateData.status);
+    }
+
+    // Хешируем пароль если он передан
+    if (password) {
+      expert.password = await bcrypt.hash(password, 10);
+      console.log('🔐 Пароль обновлен и захеширован');
     }
 
     Object.assign(expert, safeUpdateData);
@@ -347,49 +353,88 @@ private async moveFilesToExpertFolder(
 
     const expert = await this.findOne(id);
     
-    // Обновляем данные (исключаем id и login)
-    const { id: _, login: __, ...safeUpdateData } = updateData;
+    // Обрабатываем пароль отдельно (хешируем если есть)
+    const { id: _, login: __, password, remainingGalleryUrls, ...safeUpdateData } = updateData;
+    
+    // Хешируем пароль если он передан
+    if (password) {
+      expert.password = await bcrypt.hash(password, 10);
+      console.log('🔐 Пароль обновлен и захеширован');
+    }
+    
+    // Применяем остальные изменения
     Object.assign(expert, safeUpdateData);
 
-    // Обрабатываем файлы если они переданы
-    if (mainPhoto || (galleryFiles && galleryFiles.length > 0)) {
-      try {
-        const { fs, path } = await this.moveFilesToExpertFolder(
-          expert.id,
-          mainPhoto,
-          galleryFiles,
-        );
-
-        // Обновляем главное фото
-        if (mainPhoto) {
-          expert.mainPhotoUrl = `/uploads/experts/${expert.id}/${mainPhoto.filename}`;
+    // Обрабатываем файлы и галерею
+    const fs = await import('fs/promises');
+    const path = await import('path');
+    
+    try {
+      // Обрабатываем галерею (удаление старых файлов и добавление новых)
+      if (remainingGalleryUrls !== undefined || (galleryFiles && galleryFiles.length > 0)) {
+        // Получаем текущую галерею
+        let currentGallery: string[] = [];
+        if (expert.galleryUrls) {
+          try {
+            currentGallery = JSON.parse(expert.galleryUrls);
+          } catch (e) {
+            currentGallery = [];
+          }
         }
-
-        // Обновляем или добавляем к галерее
+        
+        // Удаляем файлы, которые больше не в списке оставшихся
+        const remainingUrlsSet = new Set(remainingGalleryUrls || []);
+        for (const url of currentGallery) {
+          if (!remainingUrlsSet.has(url)) {
+            // Удаляем файл с диска
+            const filePath = path.join(process.cwd(), url.startsWith('/') ? url.substring(1) : url);
+            try {
+              await fs.unlink(filePath);
+              console.log(`🗑️ Удален файл галереи: ${filePath}`);
+            } catch (error: any) {
+              if (error.code !== 'ENOENT') {
+                console.warn(`⚠️ Не удалось удалить файл ${filePath}:`, error.message);
+              }
+            }
+          }
+        }
+        
+        // Формируем новую галерею: оставшиеся существующие + новые файлы
+        let finalGalleryUrls: string[] = remainingGalleryUrls || [];
+        
+        // Добавляем новые файлы после их перемещения
         if (galleryFiles && galleryFiles.length > 0) {
+          await this.moveFilesToExpertFolder(
+            expert.id,
+            undefined,
+            galleryFiles,
+          );
+          
           const newGalleryUrls = galleryFiles.map(
             file => `/uploads/experts/${expert.id}/${file.filename}`,
           );
-          
-          // Если есть существующая галерея, добавляем к ней
-          let existingGallery = [];
-          if (expert.galleryUrls) {
-            try {
-              existingGallery = JSON.parse(expert.galleryUrls);
-            } catch (e) {
-              existingGallery = [];
-            }
-          }
-          
-          const combinedGallery = [...existingGallery, ...newGalleryUrls];
-          expert.galleryUrls = JSON.stringify(combinedGallery);
+          finalGalleryUrls = [...finalGalleryUrls, ...newGalleryUrls];
         }
-
-        console.log('✅ Файлы обновлены для эксперта:', expert.id);
-      } catch (error) {
-        console.error('❌ Ошибка при обновлении файлов:', error);
-        throw error;
+        
+        expert.galleryUrls = JSON.stringify(finalGalleryUrls);
+        console.log('✅ Галерея обновлена:', finalGalleryUrls.length, 'файлов');
       }
+
+      // Обновляем главное фото если есть
+      if (mainPhoto) {
+        await this.moveFilesToExpertFolder(
+          expert.id,
+          mainPhoto,
+          [],
+        );
+        expert.mainPhotoUrl = `/uploads/experts/${expert.id}/${mainPhoto.filename}`;
+        console.log('✅ Главное фото обновлено');
+      }
+
+      console.log('✅ Файлы обновлены для эксперта:', expert.id);
+    } catch (error) {
+      console.error('❌ Ошибка при обновлении файлов:', error);
+      throw error;
     }
 
     const updatedExpert = await this.expertsRepository.save(expert);

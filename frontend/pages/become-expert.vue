@@ -516,6 +516,24 @@ const handleSubmit = async () => {
         }
       })
       
+      // Собираем список оставшихся существующих фотографий (тех, что остались после удалений)
+      const config = useRuntimeConfig()
+      const remainingExistingUrls = galleryPreviews.value
+        .filter(preview => preview.isExisting) // Только существующие
+        .map(preview => {
+          // Извлекаем относительный путь из полного URL
+          const fullUrl = preview.url
+          const fileBase = config.public.fileBase
+          if (fullUrl.startsWith(fileBase)) {
+            return fullUrl.substring(fileBase.length)
+          }
+          return fullUrl.replace(fileBase, '')
+        })
+
+      // Добавляем список оставшихся URL-ов в FormData
+      formData.append('remainingGalleryUrls', JSON.stringify(remainingExistingUrls))
+      console.log('📋 Оставшиеся существующие фото:', remainingExistingUrls)
+      
       console.log('📝 Данные формы:')
       for (let pair of formData.entries()) {
         console.log(`  ${pair[0]}: ${pair[1]}`)
