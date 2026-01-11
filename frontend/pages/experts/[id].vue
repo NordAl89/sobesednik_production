@@ -207,7 +207,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from '#app'
-import ReviewsList from '~/components/reviews/ReviewsList.vue'
+// import ReviewsList from '~/components/reviews/ReviewsList.vue'
 const route = useRoute()
 const router = useRouter()
 
