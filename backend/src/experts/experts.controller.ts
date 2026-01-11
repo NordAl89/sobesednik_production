@@ -263,8 +263,9 @@ async confirmReset(@Body() body: any) {
     console.log('📁 Файлы:', files);
 
     // Парсим список оставшихся существующих фотографий
-    let remainingGalleryUrls: string[] = [];
-    if (updateExpertDto.remainingGalleryUrls) {
+    // ВАЖНО: всегда парсим, даже если значение пустое, чтобы отличать "не передан" от "пустой массив"
+    let remainingGalleryUrls: string[] | undefined = undefined;
+    if (updateExpertDto.remainingGalleryUrls !== undefined && updateExpertDto.remainingGalleryUrls !== null && updateExpertDto.remainingGalleryUrls !== '') {
       try {
         remainingGalleryUrls = JSON.parse(updateExpertDto.remainingGalleryUrls);
         console.log('📋 Получены оставшиеся существующие фото:', remainingGalleryUrls);
@@ -272,6 +273,8 @@ async confirmReset(@Body() body: any) {
         console.warn('⚠️ Ошибка парсинга remainingGalleryUrls:', e);
         remainingGalleryUrls = [];
       }
+    } else {
+      console.log('📋 remainingGalleryUrls не передан или пуст');
     }
 
     // Преобразуем строки из FormData в правильные типы
