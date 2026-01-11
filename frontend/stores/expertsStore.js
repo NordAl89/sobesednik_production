@@ -247,13 +247,17 @@ export const useExpertsStore = defineStore("experts", {
 
         console.log("✅ Ответ от сервера:", response);
 
+        // ВАЖНО: полностью заменяем данные эксперта, а не мерджим через spread
+        // Это гарантирует, что удаленные фотографии не останутся в старых данных
         const index = this.experts.findIndex((e) => e.id === expertId);
         if (index !== -1) {
-          this.experts[index] = { ...this.experts[index], ...response };
+          // Полностью заменяем данные эксперта на новые с сервера
+          this.experts[index] = { ...response };
         }
 
         if (this.currentExpert && this.currentExpert.id === expertId) {
-          this.currentExpert = { ...this.currentExpert, ...response };
+          // Полностью заменяем данные текущего эксперта на новые с сервера
+          this.currentExpert = { ...response };
           if (process.client) {
             localStorage.setItem(
               "currentExpert",
