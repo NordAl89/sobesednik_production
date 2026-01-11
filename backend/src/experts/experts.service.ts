@@ -356,8 +356,8 @@ private async moveFilesToExpertFolder(
     // Обрабатываем пароль отдельно (хешируем если есть)
     const { id: _, login: __, password, remainingGalleryUrls, ...safeUpdateData } = updateData;
     
-    // Хешируем пароль если он передан
-    if (password) {
+    // Хешируем пароль если он передан (проверяем что это не пустая строка)
+    if (password && typeof password === 'string' && password.trim() !== '') {
       expert.password = await bcrypt.hash(password, 10);
       console.log('🔐 Пароль обновлен и захеширован');
     }
