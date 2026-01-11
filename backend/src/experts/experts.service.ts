@@ -424,14 +424,29 @@ private async moveFilesToExpertFolder(
             console.log(`🔍 Проверка файла: "${url}" -> нормализован: "${normalizedUrl}" -> в Set: ${remainingUrlsSet.has(normalizedUrl)}`);
             if (!remainingUrlsSet.has(normalizedUrl)) {
               // Удаляем файл с диска
-              const filePath = path.join(process.cwd(), url.startsWith('/') ? url.substring(1) : url);
+              // URL имеет формат: /uploads/experts/{expertId}/filename.ext
+              // Преобразуем в путь файла: process.cwd()/uploads/experts/{expertId}/filename.ext
+              const urlPath = url.startsWith('/') ? url.substring(1) : url;
+              const filePath = path.join(process.cwd(), urlPath);
+              
               try {
-                await fs.unlink(filePath);
-                deletedCount++;
-                console.log(`🗑️ Удален файл галереи: ${filePath} (URL: ${url})`);
+                // Проверяем существование файла перед удалением
+                try {
+                  await fs.access(filePath);
+                  await fs.unlink(filePath);
+                  deletedCount++;
+                  console.log(`🗑️ Удален файл галереи: ${filePath} (URL: ${url})`);
+                } catch (accessError: any) {
+                  if (accessError.code === 'ENOENT') {
+                    console.log(`ℹ️ Файл уже не существует: ${filePath}`);
+                  } else {
+                    throw accessError;
+                  }
+                }
               } catch (error: any) {
                 if (error.code !== 'ENOENT') {
-                  console.warn(`⚠️ Не удалось удалить файл ${filePath}:`, error.message);
+                  console.error(`❌ КРИТИЧЕСКАЯ ОШИБКА: Не удалось удалить файл ${filePath}:`, error.message);
+                  console.error(`   URL: ${url}, Путь: ${filePath}`);
                 } else {
                   console.log(`ℹ️ Файл уже не существует: ${filePath}`);
                 }
