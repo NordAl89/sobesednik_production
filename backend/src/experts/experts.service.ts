@@ -371,12 +371,15 @@ private async moveFilesToExpertFolder(
     
     try {
       // Обрабатываем галерею (удаление старых файлов и добавление новых)
+      // ВАЖНО: обновляем галерею если remainingGalleryUrls передан (даже если это пустой массив)
+      // или если есть новые файлы
       if (remainingGalleryUrls !== undefined || (galleryFiles && galleryFiles.length > 0)) {
         // Получаем текущую галерею
         let currentGallery: string[] = [];
         if (expert.galleryUrls) {
           try {
-            currentGallery = JSON.parse(expert.galleryUrls);
+            const parsed = JSON.parse(expert.galleryUrls);
+            currentGallery = Array.isArray(parsed) ? parsed : [];
           } catch (e) {
             currentGallery = [];
           }
@@ -385,43 +388,58 @@ private async moveFilesToExpertFolder(
         console.log('📋 Текущая галерея из БД:', currentGallery);
         console.log('📋 Оставшиеся URL от фронтенда:', remainingGalleryUrls);
         
-        // Нормализуем URL для сравнения (убираем ведущий слеш если есть, потом добавляем обратно)
+        // Нормализуем URL для сравнения (убеждаемся что начинаются с /)
         const normalizeUrl = (url: string): string => {
           if (!url) return '';
           // Убеждаемся что URL начинается с /
           return url.startsWith('/') ? url : '/' + url;
         };
         
-        // Создаем Set из нормализованных URL для быстрого поиска
-        const normalizedRemainingUrls = (remainingGalleryUrls || []).map(normalizeUrl);
-        const remainingUrlsSet = new Set(normalizedRemainingUrls);
-        
-        console.log('📋 Нормализованные оставшиеся URL:', normalizedRemainingUrls);
-        
-        // Удаляем файлы, которые больше не в списке оставшихся
-        for (const url of currentGallery) {
-          const normalizedUrl = normalizeUrl(url);
-          if (!remainingUrlsSet.has(normalizedUrl)) {
-            // Удаляем файл с диска
-            const filePath = path.join(process.cwd(), url.startsWith('/') ? url.substring(1) : url);
-            try {
-              await fs.unlink(filePath);
-              console.log(`🗑️ Удален файл галереи: ${filePath} (URL: ${url})`);
-            } catch (error: any) {
-              if (error.code !== 'ENOENT') {
-                console.warn(`⚠️ Не удалось удалить файл ${filePath}:`, error.message);
-              } else {
-                console.log(`ℹ️ Файл уже не существует: ${filePath}`);
+        // Если remainingGalleryUrls передан, обрабатываем удаление
+        if (remainingGalleryUrls !== undefined) {
+          // Создаем Set из нормализованных URL для быстрого поиска
+          const normalizedRemainingUrls = Array.isArray(remainingGalleryUrls) 
+            ? remainingGalleryUrls.map(normalizeUrl)
+            : [];
+          const remainingUrlsSet = new Set(normalizedRemainingUrls);
+          
+          console.log('📋 Нормализованные оставшиеся URL:', normalizedRemainingUrls);
+          
+          // Удаляем файлы, которые больше не в списке оставшихся
+          for (const url of currentGallery) {
+            if (!url) continue;
+            const normalizedUrl = normalizeUrl(url);
+            if (!remainingUrlsSet.has(normalizedUrl)) {
+              // Удаляем файл с диска
+              const filePath = path.join(process.cwd(), url.startsWith('/') ? url.substring(1) : url);
+              try {
+                await fs.unlink(filePath);
+                console.log(`🗑️ Удален файл галереи: ${filePath} (URL: ${url})`);
+              } catch (error: any) {
+                if (error.code !== 'ENOENT') {
+                  console.warn(`⚠️ Не удалось удалить файл ${filePath}:`, error.message);
+                } else {
+                  console.log(`ℹ️ Файл уже не существует: ${filePath}`);
+                }
               }
+            } else {
+              console.log(`✅ Файл остается в галерее: ${url}`);
             }
-          } else {
-            console.log(`✅ Файл остается в галерее: ${url}`);
           }
         }
         
         // Формируем новую галерею: оставшиеся существующие + новые файлы
-        // Используем уже определенную функцию normalizeUrl
-        let finalGalleryUrls: string[] = (remainingGalleryUrls || []).map(normalizeUrl);
+        let finalGalleryUrls: string[] = [];
+        
+        // Если remainingGalleryUrls передан, используем его (даже если это пустой массив)
+        if (remainingGalleryUrls !== undefined) {
+          finalGalleryUrls = Array.isArray(remainingGalleryUrls) 
+            ? remainingGalleryUrls.map(normalizeUrl)
+            : [];
+        } else {
+          // Если remainingGalleryUrls не передан, оставляем текущую галерею
+          finalGalleryUrls = currentGallery.map(normalizeUrl);
+        }
         
         // Добавляем новые файлы после их перемещения
         if (galleryFiles && galleryFiles.length > 0) {
@@ -439,6 +457,7 @@ private async moveFilesToExpertFolder(
         
         expert.galleryUrls = JSON.stringify(finalGalleryUrls);
         console.log('✅ Галерея обновлена:', finalGalleryUrls.length, 'файлов');
+        console.log('📋 Финальные URL галереи:', finalGalleryUrls);
       }
 
       // Обновляем главное фото если есть
