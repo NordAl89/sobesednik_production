@@ -262,6 +262,18 @@ async confirmReset(@Body() body: any) {
     console.log('📝 Обновление эксперта с файлами:', id, updateExpertDto);
     console.log('📁 Файлы:', files);
 
+    // Парсим список оставшихся существующих фотографий
+    let remainingGalleryUrls: string[] = [];
+    if (updateExpertDto.remainingGalleryUrls) {
+      try {
+        remainingGalleryUrls = JSON.parse(updateExpertDto.remainingGalleryUrls);
+        console.log('📋 Получены оставшиеся существующие фото:', remainingGalleryUrls);
+      } catch (e) {
+        console.warn('⚠️ Ошибка парсинга remainingGalleryUrls:', e);
+        remainingGalleryUrls = [];
+      }
+    }
+
     // Преобразуем строки из FormData в правильные типы
     const normalizedDto = {
       ...updateExpertDto,
@@ -270,6 +282,7 @@ async confirmReset(@Body() body: any) {
       adultTopics: updateExpertDto.adultTopics === 'true',
       noForbiddenTopics: updateExpertDto.noForbiddenTopics === 'true',
       alwaysAvailable: updateExpertDto.alwaysAvailable === 'true',
+      remainingGalleryUrls, // Передаем в сервис
     };
 
     const mainPhoto = files?.mainPhoto?.[0];
