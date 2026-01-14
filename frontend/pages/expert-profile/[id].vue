@@ -85,6 +85,7 @@
 
        <!-- Добавляем секцию с отзывами -->
       <div class="reviews-section" v-if="expert.reviews && expert.reviews.length > 0">
+        <div class="reviews-section" >
         <h3>Отзывы на вашей странице</h3>
         
         <div class="reviews-list">
@@ -112,7 +113,9 @@
           Пока нет отзывов на вашу анкету
         </p>
       </div>
-
+      </div>
+      <ExpertReviewsReply/>
+      
       <!-- Действия -->
       <div class="action-section" v-if="!isExpired">
         <h3>Действия</h3>
@@ -164,6 +167,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useExpertsStore } from '~/stores/expertsStore';
+import ExpertReviewsReply from '~/components/reviews/ExpertReply.vue'; 
 
 const route = useRoute();
 const router = useRouter();

@@ -1,7 +1,8 @@
 <template>
   <section class="reviews-list">
     <h3 class="title">Отзывы</h3>
-
+    <!-- Форма для добавления отзыва -->
+    <ReviewForm :expertId="expertId" />
     <!-- Загрузка -->
     <p v-if="loading" class="loading">
       Загрузка отзывов…
@@ -43,10 +44,7 @@
         </p>
 
         <!-- Ответ эксперта -->
-        <div
-          v-if="review.expertReply"
-          class="expert-reply"
-        >
+        <div v-if="review.expertReply" class="expert-reply">
           <strong>Ответ собеседника:</strong>
           <p>{{ review.expertReply }}</p>
         </div>
@@ -55,14 +53,21 @@
   </section>
 </template>
 
-<script setup lang="ts">
+<script setup>
 import { ref, onMounted, watch } from 'vue'
 import { useRuntimeConfig } from 'nuxt/app'
-const props = defineProps<{
-  expertId: string
-}>()
+import ReviewForm from '~/components/reviews/ReviewForm.vue';
+/**
+ * Props (JS-версия, без TypeScript)
+ */
+const props = defineProps({
+  expertId: {
+    type: String,
+    required: true
+  }
+})
 
-const reviews = ref<any[]>([])
+const reviews = ref([])
 const loading = ref(false)
 
 const config = useRuntimeConfig()
@@ -83,11 +88,11 @@ const fetchReviews = async () => {
   }
 }
 
-const formatDate = (date: string) => {
+const formatDate = (date) => {
   return new Date(date).toLocaleDateString('ru-RU', {
     day: '2-digit',
     month: '2-digit',
-    year: 'numeric',
+    year: 'numeric'
   })
 }
 
@@ -95,14 +100,14 @@ onMounted(fetchReviews)
 
 watch(
   () => props.expertId,
-  () => fetchReviews()
+  fetchReviews
 )
 </script>
 
 <style scoped>
 .reviews-list {
-  margin-top: 3rem;
-  padding: 1.5rem;
+  margin-top: 2rem;
+  padding: 0.5rem;
   background: #f9f9f9;
   border-radius: 12px;
 }

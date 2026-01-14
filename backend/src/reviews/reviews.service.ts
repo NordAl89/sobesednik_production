@@ -66,7 +66,7 @@ export class ReviewsService {
   ): Promise<Review> {
     const ipHash = this.hashIp(ipAddress);
 
-    await this.checkIpLimit(dto.expertId, ipHash);
+   // await this.checkIpLimit(dto.expertId, ipHash);  //временно отключено для тестов
 
     const review = this.reviewsRepository.create({
       expertId: dto.expertId,
