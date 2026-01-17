@@ -23,8 +23,8 @@
               ★
             </span>
           </div>
-          <p class="rating-text"> <strong> {{ expert.rating.toFixed(1) }}</strong>
-
+          <p class="rating-text">
+            <strong>{{ (expert.rating || 0).toFixed(1) }}</strong>
           </p>
         </div>
 
@@ -122,82 +122,8 @@
       </div>
     </div>
 
-    <!-- Рейтинг -->
-    <div class="rating-section">
-
-      <!-- Форма для добавления оценки, рейтинга старая -->
-      <div class="rating-input">
-        <h4>Поставить оценку</h4>
-        <div class="stars-input">
-          <span v-for="star in 5" :key="star" class="star-input" :class="{
-            active: star <= hoverRating || star <= currentRating,
-            hover: star <= hoverRating
-          }" @click="setRating(star)" @mouseenter="hoverRating = star" @mouseleave="hoverRating = 0">
-            ★
-          </span>
-        </div>
-        <p v-if="currentRating > 0" class="selected-rating">
-          Вы поставили: {{ currentRating }} ★
-        </p>
-      </div>
-
-      <!-- Детальная статистика рейтинга старая -->
-      <!-- <div v-if="ratingStats" class="rating-stats">
-        <h4>Детальная статистика</h4>
-        <div class="stats-bars">
-          <div 
-            v-for="n in 5" 
-            :key="n" 
-            class="stat-row"
-          >
-            <span class="stat-star">{{ 6 - n }} ★</span>
-            <div class="stat-bar">
-              <div 
-                class="stat-fill" 
-                :style="{ width: getPercentage(6 - n) + '%' }"
-              ></div>
-            </div>
-            <span class="stat-count">
-              {{ ratingStats.distribution[6 - n] || 0 }}
-            </span>
-          </div>
-        </div>
-      </div> -->
-    </div>
-
     <!-- Отзывы -->
-      <ReviewsList :expertId="expert.id" />
-    <div class="reviews">
-      <!-- <h3>Отзывы</h3> -->
-     
-      <!-- Форма добавления отзыва старая -->
-      <div class="review-input-container">
-        <textarea v-model="newReview" @input="handleReviewInput" placeholder="Напишите отзыв (минимум 6 символов)..."
-          rows="3" :class="{ error: reviewError }"></textarea>
-
-        <div class="character-counter" :class="{ 'limit-reached': newReview.length >= 500 }">
-          {{ newReview.length }}/500
-        </div>
-
-        <div v-if="reviewError" class="error-message">
-          {{ reviewError }}
-        </div>
-      </div>
-
-      <button @click="addReview" :disabled="!newReview.trim() || newReview.trim().length < 6 || newReview.length > 500"
-        class="review-submit-btn">
-        Добавить отзыв
-      </button>
-
-      <!-- Список отзывов -->
-      <div v-if="expert.reviews && expert.reviews.length > 0" class="review-list">
-        <div v-for="(review, index) in expert.reviews" :key="index" class="review-item">
-          <p class="review-text">{{ review.text }}</p>
-          <small class="review-date">{{ review.date }}</small>
-        </div>
-      </div>
-      <p v-else class="no-reviews">Пока нет отзывов. Будьте первым!</p>
-    </div>
+    <ReviewsList :expertId="expert.id" />
     <!-- Кнопка жалобы -->
     <button @click="showComplaintModal" class="complaint-btn">
       ⚠️ Пожаловаться на собеседника
@@ -214,12 +140,6 @@ const router = useRouter()
 
 const expert = ref(null)
 const loading = ref(true)
-const newRating = ref(0)
-const newReview = ref('')
-const reviewError = ref('')
-const currentRating = ref(0)
-const hoverRating = ref(0)
-const ratingStats = ref(null)
 
 // SEO и мета теги
 const seoTitle = computed(() =>
@@ -438,13 +358,29 @@ const getDefaultAvatar = () => {
 // Вернуться на главную
 const goBack = () => router.push('/')
 
+// Получаем класс для отображения частично заполненных звезд
+const getStarClass = (star) => {
+  if (!expert.value) return 'empty'
+
+  const rating = expert.value.rating || 0
+  const fullStars = Math.floor(rating)
+  const partialStar = rating - fullStars
+
+  if (star <= fullStars) {
+    return 'full'
+  } else if (star === fullStars + 1 && partialStar > 0) {
+    return 'partial'
+  } else {
+    return 'empty'
+  }
+}
+
 // Получение данных эксперта с backend
 const fetchExpert = async () => {
   loading.value = true
   const config = useRuntimeConfig()
 
   try {
-
     const id = route.params.id
     const response = await $fetch(`${config.public.apiBase}/experts/${id}`)
     expert.value = response
@@ -454,7 +390,10 @@ const fetchExpert = async () => {
       expert.value.reviews = []
     }
 
-    newRating.value = expert.value.rating || 0
+    // Инициализируем rating если его нет
+    if (expert.value.rating === null || expert.value.rating === undefined) {
+      expert.value.rating = 0
+    }
 
     console.log('✅ Данные эксперта загружены:', expert.value)
     console.log('📸 Главное фото URL:', expert.value.mainPhotoUrl)
@@ -468,129 +407,6 @@ const fetchExpert = async () => {
   }
 }
 
-// Получаем класс для отображения частично заполненных звезд
-const getStarClass = (star) => {
-  if (!expert.value) return ''
-
-  const rating = expert.value.rating
-  const fullStars = Math.floor(rating)
-  const partialStar = rating - fullStars
-
-  if (star <= fullStars) {
-    return 'full'
-  } else if (star === fullStars + 1 && partialStar > 0) {
-    return 'partial'
-  } else {
-    return 'empty'
-  }
-}
-
-// Получаем процент для статистики
-const getPercentage = (star) => {
-  if (!ratingStats.value || ratingStats.value.count === 0) return 0
-  const count = ratingStats.value.distribution[star] || 0
-  return (count / ratingStats.value.count) * 100
-}
-
-// Установка рейтинга
-const setRating = async (star) => {
-  if (!expert.value) return
-  const config = useRuntimeConfig()
-  try {
-    const response = await $fetch(`${config.public.apiBase}/experts/${expert.value.id}/rating`, {
-      method: 'POST',
-      body: {
-        rating: star
-      }
-    })
-
-    // Обновляем локальные данные
-    expert.value.rating = response.rating
-    expert.value.ratingCount = response.ratingCount
-    if (expert.value.ratings) {
-      expert.value.ratings.push(star)
-    } else {
-      expert.value.ratings = [star]
-    }
-
-    currentRating.value = star
-    await fetchRatingStats()
-
-    console.log('✅ Оценка добавлена:', response)
-  } catch (error) {
-    console.error('❌ Ошибка добавления оценки:', error)
-  }
-}
-
-// Загрузка статистики рейтинга
-const fetchRatingStats = async () => {
-  if (!expert.value) return
-  const config = useRuntimeConfig()
-  try {
-    const response = await $fetch(`${config.public.apiBase}/experts/${expert.value.id}/rating/stats`)
-    ratingStats.value = response
-  } catch (error) {
-    console.error('❌ Ошибка загрузки статистики:', error)
-  }
-}
-
-
-// Добавление отзыва
-// Валидация отзыва
-const validateReview = (text) => {
-  if (!text.trim()) {
-    return 'Отзыв не может быть пустым'
-  }
-  if (text.trim().length < 6) {
-    return 'Отзыв должен содержать не менее 6 символов'
-  }
-  if (text.trim().length > 500) {
-    return 'Отзыв не должен превышать 500 символов'
-  }
-  return ''
-}
-
-
-const addReview = async () => {
-  if (!expert.value) return
-
-  // Валидируем отзыв
-  const error = validateReview(newReview.value)
-  if (error) {
-    reviewError.value = error
-    return
-  }
-
-  // Сбрасываем ошибку
-  reviewError.value = ''
-
-  const review = {
-    text: newReview.value.trim(),
-    date: new Date().toLocaleString()
-  }
-  const config = useRuntimeConfig()
-  try {
-    await $fetch(`${config.public.apiBase}/experts/${expert.value.id}/reviews`, {
-      method: 'POST',
-      body: review
-    })
-
-    expert.value.reviews = expert.value.reviews || []
-    expert.value.reviews.push(review)
-    newReview.value = ''
-  } catch (error) {
-    console.error('❌ Ошибка добавления отзыва:', error)
-    reviewError.value = 'Не удалось добавить отзыв. Попробуйте снова.'
-  }
-}
-
-// Сброс ошибки при изменении текста
-const handleReviewInput = () => {
-  if (reviewError.value) {
-    reviewError.value = ''
-  }
-}
-// Добавление отзыва. Конец
 
 // Логика для перехода в Telegram и отправки уведомления эксперту
 const getTelegramLink = (username) => {

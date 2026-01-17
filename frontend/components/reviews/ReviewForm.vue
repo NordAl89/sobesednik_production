@@ -60,8 +60,10 @@
 <script setup>
 import { ref } from 'vue'
 import { useRuntimeConfig } from 'nuxt/app'
+import { useRouter } from 'vue-router'
 
 const emit = defineEmits(['submitted'])
+const router = useRouter()
 /**
  * Props (JS-версия)
  */
@@ -114,6 +116,9 @@ const submitReview = async () => {
     console.log('✅ Отзыв успешно отправлен')
 
     emit('submitted')
+    
+    // Переход на публичную страницу эксперта
+    await router.push(`/experts/${props.expertId}`)
     
   } catch (error) {
     console.error('❌ Ошибка при отправке отзыва:', error)

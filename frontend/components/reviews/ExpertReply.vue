@@ -55,7 +55,7 @@ const submitReply = async () => {
     await $fetch(`${config.public.apiBase}/reviews/${props.reviewId}/reply`, {
       method: 'POST',
       body: {
-        text: reply.value.trim()
+        expertReply: reply.value.trim()
       }
     })
 

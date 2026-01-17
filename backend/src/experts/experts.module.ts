@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ExpertsController } from './experts.controller';
 import { ExpertsService } from './experts.service';
@@ -7,11 +7,13 @@ import { MulterModule } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname, join } from 'path';
 import { TelegramService } from '../telegram/telegram.service';
+import { ReviewsModule } from '../reviews/reviews.module';
 
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Expert]),
+    forwardRef(() => ReviewsModule),
     MulterModule.register({
       storage: diskStorage({
         destination: (req, file, cb) => {
@@ -45,5 +47,6 @@ import { TelegramService } from '../telegram/telegram.service';
   ],
   controllers: [ExpertsController],
   providers: [ExpertsService, TelegramService],
+  exports: [ExpertsService],
 })
 export class ExpertsModule {}

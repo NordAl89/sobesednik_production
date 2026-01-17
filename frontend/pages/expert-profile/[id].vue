@@ -83,10 +83,9 @@
         </div>
       </div>
 
-       <!-- Добавляем секцию с отзывами -->
+       <!-- Старые отзывы (из expert.reviews) -->
       <div class="reviews-section" v-if="expert.reviews && expert.reviews.length > 0">
-        <div class="reviews-section" >
-        <h3>Отзывы на вашей странице</h3>
+        <h3>Старые отзывы на вашей странице</h3>
         
         <div class="reviews-list">
           <div 
@@ -108,13 +107,90 @@
             </button>
           </div>
         </div>
+      </div>
+
+      <!-- Новые отзывы (из таблицы reviews) с возможностью ответа -->
+      <div class="reviews-section" v-if="newReviews.length > 0">
+        <h3>Отзывы на вашей странице</h3>
         
-        <p v-if="expert.reviews.length === 0" class="no-reviews">
-          Пока нет отзывов на вашу анкету
-        </p>
+        <div class="reviews-list">
+          <div 
+            v-for="review in newReviews" 
+            :key="review.id" 
+            class="review-item"
+          >
+            <div class="review-content">
+              <div class="review-header">
+                <span class="review-author">{{ review.authorName }}</span>
+                <span class="review-date">{{ formatDate(review.createdAt) }}</span>
+              </div>
+              
+              <div v-if="review.rating" class="review-rating">
+                <span
+                  v-for="star in 5"
+                  :key="star"
+                  class="star"
+                  :class="{ active: star <= review.rating }"
+                >
+                  ★
+                </span>
+              </div>
+              
+              <p class="review-text">{{ review.text }}</p>
+              
+              <!-- Ответ эксперта (если есть) -->
+              <div v-if="review.expertReply" class="expert-reply-display">
+                <strong>Ваш ответ:</strong>
+                <p>{{ review.expertReply }}</p>
+                <small class="reply-date">{{ formatDate(review.repliedAt) }}</small>
+              </div>
+            </div>
+            
+            <!-- Форма ответа (если ответа еще нет) -->
+            <div v-if="!review.expertReply" class="reply-section">
+              <button 
+                v-if="!replyingReviews[review.id]"
+                @click="startReplying(review.id)" 
+                class="reply-btn"
+              >
+                💬 Ответить
+              </button>
+              
+              <div v-else class="reply-form">
+                <textarea 
+                  v-model="replyTexts[review.id]" 
+                  placeholder="Ваш ответ на отзыв..."
+                  rows="3"
+                  class="reply-textarea"
+                ></textarea>
+                <div class="reply-actions">
+                  <button 
+                    @click="submitReply(review.id)" 
+                    class="submit-reply-btn"
+                    :disabled="!replyTexts[review.id]?.trim()"
+                  >
+                    Отправить
+                  </button>
+                  <button 
+                    @click="cancelReply(review.id)" 
+                    class="cancel-reply-btn"
+                  >
+                    Отмена
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-      </div>
-      <ExpertReviewsReply/>
+      
+      <p v-if="newReviewsLoading" class="loading-reviews">
+        Загрузка отзывов...
+      </p>
+      
+      <p v-if="!newReviewsLoading && newReviews.length === 0 && (!expert.reviews || expert.reviews.length === 0)" class="no-reviews">
+        Пока нет отзывов на вашу анкету
+      </p>
       
       <!-- Действия -->
       <div class="action-section" v-if="!isExpired">
@@ -167,7 +243,6 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useExpertsStore } from '~/stores/expertsStore';
-import ExpertReviewsReply from '~/components/reviews/ExpertReply.vue'; 
 
 const route = useRoute();
 const router = useRouter();
@@ -178,6 +253,12 @@ const loading = ref(true);
 const isExpired = ref(false);
 const timeLeft = ref(0); // дни
 const countdownInterval = ref(null);
+
+// Новые отзывы из таблицы reviews
+const newReviews = ref([]);
+const newReviewsLoading = ref(false);
+const replyingReviews = ref({}); // { reviewId: true/false }
+const replyTexts = ref({}); // { reviewId: 'текст ответа' }
 
 // Таймер обратного отсчета
 const startCountdown = () => {
@@ -231,6 +312,65 @@ const checkExpertStatus = async () => {
   }
 };
 
+// Загрузка новых отзывов из таблицы reviews
+const fetchNewReviews = async () => {
+  if (!expert.value?.id) return;
+  
+  newReviewsLoading.value = true;
+  const config = useRuntimeConfig();
+  try {
+    const reviews = await $fetch(
+      `${config.public.apiBase}/reviews/expert/${expert.value.id}`
+    );
+    newReviews.value = reviews || [];
+  } catch (error) {
+    console.error('Ошибка загрузки отзывов:', error);
+    newReviews.value = [];
+  } finally {
+    newReviewsLoading.value = false;
+  }
+};
+
+// Начать ответ на отзыв
+const startReplying = (reviewId) => {
+  replyingReviews.value[reviewId] = true;
+  replyTexts.value[reviewId] = '';
+};
+
+// Отменить ответ
+const cancelReply = (reviewId) => {
+  replyingReviews.value[reviewId] = false;
+  replyTexts.value[reviewId] = '';
+};
+
+// Отправить ответ на отзыв
+const submitReply = async (reviewId) => {
+  const replyText = replyTexts.value[reviewId]?.trim();
+  if (!replyText) return;
+
+  const config = useRuntimeConfig();
+  try {
+    await $fetch(`${config.public.apiBase}/reviews/${reviewId}/reply`, {
+      method: 'POST',
+      body: {
+        expertReply: replyText
+      }
+    });
+
+    // Обновляем список отзывов
+    await fetchNewReviews();
+    
+    // Закрываем форму ответа
+    replyingReviews.value[reviewId] = false;
+    replyTexts.value[reviewId] = '';
+    
+    console.log('✅ Ответ отправлен');
+  } catch (error) {
+    console.error('❌ Ошибка при отправке ответа:', error);
+    alert('Не удалось отправить ответ. Попробуйте снова.');
+  }
+};
+
 // Загрузка данных эксперта
 onMounted(async () => {
   const expertId = route.params.id
@@ -259,6 +399,9 @@ onMounted(async () => {
     if (!expert.value.reviews) expert.value.reviews = []
 
     startCountdown()
+    
+    // Загружаем новые отзывы
+    await fetchNewReviews()
   } catch (error) {
     console.error('Ошибка загрузки профиля:', error)
     router.push('/expert-login')
@@ -389,7 +532,9 @@ const statusClass = computed(() => {
 const formatDate = (dateString) => {
   if (!dateString) return 'не указана';
   try {
-    return new Date(dateString).toLocaleDateString('ru-RU', {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return 'неверная дата';
+    return date.toLocaleDateString('ru-RU', {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
@@ -677,6 +822,144 @@ const deleteReview = async (reviewIndex) => {
 .review-date {
   color: #666;
   font-size: 0.85rem;
+}
+
+/* Стили для новых отзывов в личном кабинете */
+.review-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.review-author {
+  font-weight: 600;
+  color: #34495e;
+}
+
+.review-rating {
+  margin: 0.5rem 0;
+}
+
+.review-rating .star {
+  font-size: 1.2rem;
+  color: #ddd;
+  margin-right: 2px;
+}
+
+.review-rating .star.active {
+  color: #f1c40f;
+}
+
+.expert-reply-display {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background: #eef6ff;
+  border-left: 4px solid #3498db;
+  border-radius: 6px;
+}
+
+.expert-reply-display strong {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #2c3e50;
+}
+
+.expert-reply-display p {
+  margin: 0.25rem 0;
+  color: #333;
+}
+
+.reply-date {
+  display: block;
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
+  color: #999;
+}
+
+.reply-section {
+  margin-top: 1rem;
+}
+
+.reply-btn {
+  background: #3498db;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background 0.3s;
+}
+
+.reply-btn:hover {
+  background: #2980b9;
+}
+
+.reply-form {
+  margin-top: 0.5rem;
+}
+
+.reply-textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-family: inherit;
+  resize: vertical;
+  margin-bottom: 0.5rem;
+}
+
+.reply-textarea:focus {
+  outline: none;
+  border-color: #3498db;
+  box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.1);
+}
+
+.reply-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.submit-reply-btn {
+  background: #27ae60;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.submit-reply-btn:hover:not(:disabled) {
+  background: #229954;
+}
+
+.submit-reply-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.cancel-reply-btn {
+  background: #95a5a6;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.cancel-reply-btn:hover {
+  background: #7f8c8d;
+}
+
+.loading-reviews {
+  text-align: center;
+  color: #666;
+  font-style: italic;
+  padding: 1rem;
 }
 
 /* Кнопка удаления отзыва */

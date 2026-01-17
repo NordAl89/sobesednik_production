@@ -2,6 +2,8 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  Inject,
+  forwardRef,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -9,6 +11,7 @@ import { Review, ReviewStatus, ReviewSource } from './entities/review.entity';
 import { CreateReviewDto } from './dto/create-review.dto';
 import { ModerateReviewDto } from './dto/moderate-review.dto';
 import { ReplyReviewDto } from './dto/reply-review.dto';
+import { ExpertsService } from '../experts/experts.service';
 import * as crypto from 'crypto';
 
 @Injectable()
@@ -16,6 +19,8 @@ export class ReviewsService {
   constructor(
     @InjectRepository(Review)
     private readonly reviewsRepository: Repository<Review>,
+    @Inject(forwardRef(() => ExpertsService))
+    private readonly expertsService: ExpertsService,
   ) {}
 
   /* =====================================================
@@ -128,7 +133,14 @@ export class ReviewsService {
       review.rating = null;
     }
 
-    return await this.reviewsRepository.save(review);
+    const savedReview = await this.reviewsRepository.save(review);
+
+    // Обновляем рейтинг эксперта после модерации (если отзыв одобрен)
+    if (dto.status === ReviewStatus.APPROVED) {
+      await this.updateExpertRating(review.expertId);
+    }
+
+    return savedReview;
   }
 
   /* =====================================================
@@ -160,10 +172,27 @@ export class ReviewsService {
   }
 
   /* =====================================================
-     РЕЙТИНГ (ТОЛЬКО APPROVED)
+     РЕЙТИНГ (КОМБИНИРОВАННЫЙ: СТАРЫЕ ОЦЕНКИ + НОВЫЕ APPROVED ОТЗЫВЫ)
      ===================================================== */
 
   async getRatingStats(expertId: string) {
+    // Получаем эксперта для доступа к старым оценкам
+    const expert = await this.expertsService.findOne(expertId);
+
+    // Парсим старые оценки из expert.ratings
+    let legacyRatings: number[] = [];
+    if (expert.ratings) {
+      try {
+        legacyRatings = JSON.parse(expert.ratings);
+        if (!Array.isArray(legacyRatings)) {
+          legacyRatings = [];
+        }
+      } catch (e) {
+        legacyRatings = [];
+      }
+    }
+
+    // Получаем новые APPROVED отзывы с рейтингом
     const reviews = await this.reviewsRepository.find({
       where: {
         expertId,
@@ -171,11 +200,16 @@ export class ReviewsService {
       },
     });
 
-    const ratings = reviews
+    const newRatings = reviews
       .map(r => r.rating)
-      .filter((r): r is number => r !== null);
+      .filter((r): r is number => r !== null && r >= 1 && r <= 5);
 
-    if (ratings.length === 0) {
+    // Объединяем старые и новые оценки
+    const allRatings = [...legacyRatings, ...newRatings].filter(
+      (r): r is number => r >= 1 && r <= 5
+    );
+
+    if (allRatings.length === 0) {
       return {
         average: 0,
         count: 0,
@@ -185,20 +219,88 @@ export class ReviewsService {
 
     const distribution = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
 
-    ratings.forEach(r => {
+    allRatings.forEach(r => {
       if (r >= 1 && r <= 5) {
         distribution[r]++;
       }
     });
 
     const average =
-      ratings.reduce((sum, r) => sum + r, 0) / ratings.length;
+      allRatings.reduce((sum, r) => sum + r, 0) / allRatings.length;
 
     return {
       average: Number(average.toFixed(2)),
-      count: ratings.length,
+      count: allRatings.length,
       distribution,
     };
+  }
+
+  /**
+   * Обновляет рейтинг эксперта на основе комбинированных данных:
+   * старые оценки из expert.ratings + новые APPROVED отзывы
+   */
+  private async updateExpertRating(expertId: string): Promise<void> {
+    try {
+      const expert = await this.expertsService.findOne(expertId);
+
+      // Парсим старые оценки
+      let legacyRatings: number[] = [];
+      if (expert.ratings) {
+        try {
+          legacyRatings = JSON.parse(expert.ratings);
+          if (!Array.isArray(legacyRatings)) {
+            legacyRatings = [];
+          }
+        } catch (e) {
+          legacyRatings = [];
+        }
+      }
+
+      // Получаем новые APPROVED отзывы с рейтингом
+      const reviews = await this.reviewsRepository.find({
+        where: {
+          expertId,
+          status: ReviewStatus.APPROVED,
+        },
+      });
+
+      const newRatings = reviews
+        .map(r => r.rating)
+        .filter((r): r is number => r !== null && r >= 1 && r <= 5);
+
+      // Объединяем все оценки
+      const allRatings = [...legacyRatings, ...newRatings].filter(
+        (r): r is number => r >= 1 && r <= 5
+      );
+
+      if (allRatings.length === 0) {
+        expert.rating = 0;
+        expert.ratingCount = 0;
+        expert.ratings = JSON.stringify([]);
+      } else {
+        const average = allRatings.reduce((sum, r) => sum + r, 0) / allRatings.length;
+        expert.rating = parseFloat(average.toFixed(2));
+        expert.ratingCount = allRatings.length;
+        expert.ratings = JSON.stringify(allRatings);
+      }
+
+      // Сохраняем обновленного эксперта через метод update
+      await this.expertsService.update(expertId, {
+        rating: expert.rating,
+        ratingCount: expert.ratingCount,
+        ratings: expert.ratings,
+      });
+
+      console.log(
+        `✅ Рейтинг эксперта ${expertId} обновлен: ${expert.rating} (${expert.ratingCount} оценок)`,
+      );
+    } catch (error) {
+      console.error(
+        `❌ Ошибка при обновлении рейтинга эксперта ${expertId}:`,
+        error,
+      );
+      // Не пробрасываем ошибку, чтобы не сломать процесс модерации
+    }
   }
 
   /* =====================================================

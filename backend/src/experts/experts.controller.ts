@@ -16,10 +16,14 @@ import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { ExpertsService } from './experts.service';
 import { CreateExpertDto } from './dto/create-expert.dto';
 import { LoginExpertDto } from './dto/login-expert.dto';
+import { ReviewsService } from '../reviews/reviews.service';
 
 @Controller('experts')
 export class ExpertsController {
-  constructor(private readonly expertsService: ExpertsService) {}
+  constructor(
+    private readonly expertsService: ExpertsService,
+    private readonly reviewsService: ReviewsService,
+  ) {}
 
   // Восстановление доступа к аккаунту эксперта
 @Post('reset')
@@ -645,24 +649,15 @@ async findAll() {
     };
   }
 
-  // Получение детальной статистики рейтинга
+  // Получение детальной статистики рейтинга (комбинированный расчет)
   @Get(':id/rating/stats')
   async getRatingStats(@Param('id') id: string) {
-    const expert = await this.expertsService.findOne(id);
-    
-    let ratings: number[] = [];
-    if (expert.ratings) {
-      try {
-        ratings = JSON.parse(expert.ratings);
-      } catch (e) {
-        ratings = [];
-      }
-    }
-
-    const stats = this.expertsService.getRatingStats(ratings);
+    // Используем ReviewsService для комбинированного расчета рейтинга
+    // (старые оценки из expert.ratings + новые APPROVED отзывы)
+    const stats = await this.reviewsService.getRatingStats(id);
 
     return {
-      id: expert.id,
+      id: id,
       ...stats
     };
   }
