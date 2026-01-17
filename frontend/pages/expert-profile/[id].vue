@@ -1,17 +1,6 @@
 <template>
   <div class="expert-profile">
     <div v-if="expert" class="profile-container">
-      <!-- Таймер обратного отсчета -->
-      <!-- <div v-if="!isExpired && timeLeft > 0" class="countdown-timer">
-        <div class="timer-content">
-          <span class="timer-icon">⏰</span>
-          <span class="timer-text">До удаления анкеты:</span>
-          <span class="timer-display">{{ formattedTime }}</span>
-        </div>
-        <div class="timer-progress">
-          <div class="progress-bar" :style="{ width: progressPercentage + '%' }"></div>
-        </div>
-      </div> -->
 
       <!-- Баннер истечения срока -->
       <div v-if="isExpired" class="expired-banner">
@@ -83,61 +72,26 @@
         </div>
       </div>
 
-       <!-- Старые отзывы (из expert.reviews) -->
-      <div class="reviews-section" v-if="expert.reviews && expert.reviews.length > 0">
-        <h3>Старые отзывы на вашей странице</h3>
-        
-        <div class="reviews-list">
-          <div 
-            v-for="(review, index) in expert.reviews" 
-            :key="index" 
-            class="review-item"
-          >
-            <div class="review-content">
-              <p class="review-text">{{ review.text }}</p>
-              <small class="review-date">{{ formatDate(review.date) }}</small>
-            </div>
-            
-            <button 
-              @click="deleteReview(index)" 
-              class="delete-review-btn"
-              title="Удалить отзыв"
-            >
-              🗑️ Удалить
-            </button>
-          </div>
-        </div>
-      </div>
-
       <!-- Новые отзывы (из таблицы reviews) с возможностью ответа -->
       <div class="reviews-section" v-if="newReviews.length > 0">
         <h3>Отзывы на вашей странице</h3>
-        
+
         <div class="reviews-list">
-          <div 
-            v-for="review in newReviews" 
-            :key="review.id" 
-            class="review-item"
-          >
+          <div v-for="review in newReviews" :key="review.id" class="review-item">
             <div class="review-content">
               <div class="review-header">
                 <span class="review-author">{{ review.authorName }}</span>
                 <span class="review-date">{{ formatDate(review.createdAt) }}</span>
               </div>
-              
+
               <div v-if="review.rating" class="review-rating">
-                <span
-                  v-for="star in 5"
-                  :key="star"
-                  class="star"
-                  :class="{ active: star <= review.rating }"
-                >
+                <span v-for="star in 5" :key="star" class="star" :class="{ active: star <= review.rating }">
                   ★
                 </span>
               </div>
-              
+
               <p class="review-text">{{ review.text }}</p>
-              
+
               <!-- Ответ эксперта (если есть) -->
               <div v-if="review.expertReply" class="expert-reply-display">
                 <strong>Ваш ответ:</strong>
@@ -145,36 +99,22 @@
                 <small class="reply-date">{{ formatDate(review.repliedAt) }}</small>
               </div>
             </div>
-            
+
             <!-- Форма ответа (если ответа еще нет) -->
             <div v-if="!review.expertReply" class="reply-section">
-              <button 
-                v-if="!replyingReviews[review.id]"
-                @click="startReplying(review.id)" 
-                class="reply-btn"
-              >
+              <button v-if="!replyingReviews[review.id]" @click="startReplying(review.id)" class="reply-btn">
                 💬 Ответить
               </button>
-              
+
               <div v-else class="reply-form">
-                <textarea 
-                  v-model="replyTexts[review.id]" 
-                  placeholder="Ваш ответ на отзыв..."
-                  rows="3"
-                  class="reply-textarea"
-                ></textarea>
+                <textarea v-model="replyTexts[review.id]" placeholder="Ваш ответ на отзыв..." rows="3"
+                  class="reply-textarea"></textarea>
                 <div class="reply-actions">
-                  <button 
-                    @click="submitReply(review.id)" 
-                    class="submit-reply-btn"
-                    :disabled="!replyTexts[review.id]?.trim()"
-                  >
+                  <button @click="submitReply(review.id)" class="submit-reply-btn"
+                    :disabled="!replyTexts[review.id]?.trim()">
                     Отправить
                   </button>
-                  <button 
-                    @click="cancelReply(review.id)" 
-                    class="cancel-reply-btn"
-                  >
+                  <button @click="cancelReply(review.id)" class="cancel-reply-btn">
                     Отмена
                   </button>
                 </div>
@@ -183,15 +123,16 @@
           </div>
         </div>
       </div>
-      
+
       <p v-if="newReviewsLoading" class="loading-reviews">
         Загрузка отзывов...
       </p>
-      
-      <p v-if="!newReviewsLoading && newReviews.length === 0 && (!expert.reviews || expert.reviews.length === 0)" class="no-reviews">
+
+      <p v-if="!newReviewsLoading && newReviews.length === 0 && (!expert.reviews || expert.reviews.length === 0)"
+        class="no-reviews">
         Пока нет отзывов на вашу анкету
       </p>
-      
+
       <!-- Действия -->
       <div class="action-section" v-if="!isExpired">
         <h3>Действия</h3>
@@ -293,7 +234,7 @@ const formattedTime = computed(() => {
 
 // Проверка статуса анкеты
 const checkExpertStatus = async () => {
-  const config = useRuntimeConfig() 
+  const config = useRuntimeConfig()
   try {
     const response = await $fetch(`${config.public.apiBase}/experts/${expert.value.id}`);
     // Обновляем статус на expired
@@ -315,7 +256,7 @@ const checkExpertStatus = async () => {
 // Загрузка новых отзывов из таблицы reviews
 const fetchNewReviews = async () => {
   if (!expert.value?.id) return;
-  
+
   newReviewsLoading.value = true;
   const config = useRuntimeConfig();
   try {
@@ -359,11 +300,11 @@ const submitReply = async (reviewId) => {
 
     // Обновляем список отзывов
     await fetchNewReviews();
-    
+
     // Закрываем форму ответа
     replyingReviews.value[reviewId] = false;
     replyTexts.value[reviewId] = '';
-    
+
     console.log('✅ Ответ отправлен');
   } catch (error) {
     console.error('❌ Ошибка при отправке ответа:', error);
@@ -399,7 +340,7 @@ onMounted(async () => {
     if (!expert.value.reviews) expert.value.reviews = []
 
     startCountdown()
-    
+
     // Загружаем новые отзывы
     await fetchNewReviews()
   } catch (error) {
@@ -424,7 +365,7 @@ const editProfile = () => {
 };
 
 const requestModeration = async () => {
-  const config = useRuntimeConfig() 
+  const config = useRuntimeConfig()
   try {
     await expertsStore.requestModeration(expert.value.id);
     alert('Запрос на модерацию отправлен!');
@@ -456,7 +397,7 @@ const profileStausSwitcher = async () => {
     expert.value.availability = newAvailability;
 
     // Отправляем запрос на сервер
-    const config = useRuntimeConfig() 
+    const config = useRuntimeConfig()
     const response = await $fetch(`${config.public.apiBase}/experts/${expert.value.id}`, {
       method: 'PATCH',
       body: {
@@ -497,7 +438,7 @@ const logout = () => {
 
 const deleteProfile = async () => {
   if (!confirm('Вы уверены, что хотите удалить свою анкету?')) return;
-  const config = useRuntimeConfig() 
+  const config = useRuntimeConfig()
   try {
     await $fetch(`${config.public.apiBase}/experts/${expert.value.id}`, { method: 'DELETE' });
     alert('Анкета удалена.');
@@ -549,10 +490,10 @@ const formatDate = (dateString) => {
 // Удаление отзыва
 const deleteReview = async (reviewIndex) => {
   if (!confirm('Вы уверены, что хотите удалить этот отзыв?')) return;
-  const config = useRuntimeConfig() 
+  const config = useRuntimeConfig()
   try {
     const response = await $fetch(
-      `${config.public.apiBase}/experts/${expert.value.id}/reviews/${reviewIndex}/delete`, 
+      `${config.public.apiBase}/experts/${expert.value.id}/reviews/${reviewIndex}/delete`,
       {
         method: 'POST' // Изменено с DELETE на POST
       }
@@ -560,7 +501,7 @@ const deleteReview = async (reviewIndex) => {
 
     // Обновляем локальные данные
     expert.value.reviews = response.reviews;
-    
+
     console.log('✅ Отзыв удален');
   } catch (error) {
     console.error('❌ Ошибка при удалении отзыва:', error);
@@ -794,11 +735,12 @@ const deleteReview = async (reviewIndex) => {
 
 .review-item {
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
+  /* justify-content: space-between; */
   align-items: flex-start;
   gap: 1rem;
   padding: 1.5rem;
-  background: white;
+  background: rgb(223, 223, 223);
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   transition: box-shadow 0.3s ease;
@@ -810,6 +752,7 @@ const deleteReview = async (reviewIndex) => {
 
 .review-content {
   flex: 1;
+  width: 100%;
 }
 
 .review-text {
@@ -879,6 +822,7 @@ const deleteReview = async (reviewIndex) => {
 
 .reply-section {
   margin-top: 1rem;
+  width: 100%;
 }
 
 .reply-btn {
@@ -898,6 +842,7 @@ const deleteReview = async (reviewIndex) => {
 
 .reply-form {
   margin-top: 0.5rem;
+  width: 100%;  
 }
 
 .reply-textarea {
@@ -1214,7 +1159,7 @@ const deleteReview = async (reviewIndex) => {
     text-align: center;
   }
 
-   .review-item {
+  .review-item {
     flex-direction: column;
     align-items: stretch;
     gap: 1rem;
@@ -1229,7 +1174,7 @@ const deleteReview = async (reviewIndex) => {
   .review-item {
     padding: 1rem;
   }
-  
+
   .review-text {
     font-size: 0.9rem;
   }

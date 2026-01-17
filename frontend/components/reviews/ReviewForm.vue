@@ -2,10 +2,10 @@
   <div class="review-form-wrapper">
     <!-- Форма отзыва -->
     <form @submit.prevent="openRatingModal" class="review-form">
-      <h4>Оставьте отзыв</h4>
+      <h3>Оставьте отзыв</h3>
 
       <div class="form-group">
-        <label for="text">Текст отзыва</label>
+        <!-- <label for="text">Текст отзыва</label> -->
         <textarea
           id="text"
           v-model="form.text"

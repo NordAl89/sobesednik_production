@@ -1,6 +1,6 @@
 <template>
   <section class="reviews-list">
-    <h3 class="title">Отзывы</h3>
+    
     <!-- Форма для добавления отзыва -->
     <ReviewForm :expertId="expertId" />
     <!-- Загрузка -->
