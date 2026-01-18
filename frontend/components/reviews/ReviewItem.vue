@@ -25,7 +25,7 @@
 
     <!-- Ответ эксперта -->
     <div v-if="review.expertReply" class="expert-reply">
-      <strong>Ответ собеседника:</strong>
+      <strong>{{ review.expertName || 'собеседника' }}</strong>
       <p>{{ review.expertReply }}</p>
     </div>
   </article>
