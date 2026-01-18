@@ -154,19 +154,30 @@ export class ReviewsService {
     }
     
     // Преобразуем старые отзывы к формату, похожему на новые (для объединения)
-    const formattedLegacyReviews = legacyReviews.map((legacyReview: any, index: number) => ({
-      id: `legacy-${expertId}-${index}`,
-      expertId: expertId,
-      text: legacyReview.text || '',
-      rating: legacyReview.rating || null,
-      authorName: 'Гость',
-      status: 'approved',
-      expertReply: legacyReview.expertReply || null,
-      expertName: expert?.name || null,
-      createdAt: legacyReview.date ? new Date(legacyReview.date) : (expert?.createdAt || new Date()),
-      updatedAt: legacyReview.date ? new Date(legacyReview.date) : (expert?.createdAt || new Date()),
-      source: 'legacy',
-    }));
+    const formattedLegacyReviews = legacyReviews.map((legacyReview: any, index: number) => {
+      // Извлекаем рейтинг из старого отзыва (может быть в разных форматах)
+      let rating = null;
+      if (legacyReview.rating !== undefined && legacyReview.rating !== null) {
+        const ratingValue = Number(legacyReview.rating);
+        if (!isNaN(ratingValue) && ratingValue >= 1 && ratingValue <= 5) {
+          rating = ratingValue;
+        }
+      }
+      
+      return {
+        id: `legacy-${expertId}-${index}`,
+        expertId: expertId,
+        text: legacyReview.text || '',
+        rating: rating,
+        authorName: 'Гость',
+        status: 'approved',
+        expertReply: legacyReview.expertReply || null,
+        expertName: expert?.name || null,
+        createdAt: legacyReview.date ? new Date(legacyReview.date) : (expert?.createdAt || new Date()),
+        updatedAt: legacyReview.date ? new Date(legacyReview.date) : (expert?.createdAt || new Date()),
+        source: 'legacy',
+      };
+    });
     
     // Объединяем старые и новые отзывы
     const allReviews = [...formattedLegacyReviews, ...newReviews];
@@ -264,6 +275,29 @@ export class ReviewsService {
       }
     }
 
+    // Извлекаем рейтинги из старых отзывов (legacy reviews)
+    let legacyReviewRatings: number[] = [];
+    if (expert.reviews) {
+      try {
+        const parsed = JSON.parse(expert.reviews);
+        if (Array.isArray(parsed)) {
+          legacyReviewRatings = parsed
+            .map((review: any) => {
+              if (review.rating !== undefined && review.rating !== null) {
+                const ratingValue = Number(review.rating);
+                if (!isNaN(ratingValue) && ratingValue >= 1 && ratingValue <= 5) {
+                  return ratingValue;
+                }
+              }
+              return null;
+            })
+            .filter((r): r is number => r !== null);
+        }
+      } catch (e) {
+        // Игнорируем ошибки парсинга
+      }
+    }
+
     // Получаем новые APPROVED отзывы с рейтингом
     const reviews = await this.reviewsRepository.find({
       where: {
@@ -277,7 +311,7 @@ export class ReviewsService {
       .filter((r): r is number => r !== null && r >= 1 && r <= 5);
 
     // Объединяем старые и новые оценки
-    const allRatings = [...legacyRatings, ...newRatings].filter(
+    const allRatings = [...legacyRatings, ...legacyReviewRatings, ...newRatings].filter(
       (r): r is number => r >= 1 && r <= 5
     );
 
@@ -309,13 +343,13 @@ export class ReviewsService {
 
   /**
    * Обновляет рейтинг эксперта на основе комбинированных данных:
-   * старые оценки из expert.ratings + новые APPROVED отзывы
+   * старые оценки из expert.ratings + рейтинги из legacy отзывов + новые APPROVED отзывы
    */
   private async updateExpertRating(expertId: string): Promise<void> {
     try {
       const expert = await this.expertsService.findOne(expertId);
 
-      // Парсим старые оценки
+      // Парсим старые оценки из expert.ratings
       let legacyRatings: number[] = [];
       if (expert.ratings) {
         try {
@@ -325,6 +359,29 @@ export class ReviewsService {
           }
         } catch (e) {
           legacyRatings = [];
+        }
+      }
+
+      // Извлекаем рейтинги из старых отзывов (legacy reviews)
+      let legacyReviewRatings: number[] = [];
+      if (expert.reviews) {
+        try {
+          const parsed = JSON.parse(expert.reviews);
+          if (Array.isArray(parsed)) {
+            legacyReviewRatings = parsed
+              .map((review: any) => {
+                if (review.rating !== undefined && review.rating !== null) {
+                  const ratingValue = Number(review.rating);
+                  if (!isNaN(ratingValue) && ratingValue >= 1 && ratingValue <= 5) {
+                    return ratingValue;
+                  }
+                }
+                return null;
+              })
+              .filter((r): r is number => r !== null);
+          }
+        } catch (e) {
+          // Игнорируем ошибки парсинга
         }
       }
 
@@ -340,8 +397,8 @@ export class ReviewsService {
         .map(r => r.rating)
         .filter((r): r is number => r !== null && r >= 1 && r <= 5);
 
-      // Объединяем все оценки
-      const allRatings = [...legacyRatings, ...newRatings].filter(
+      // Объединяем все оценки: старые из ratings + из legacy отзывов + новые
+      const allRatings = [...legacyRatings, ...legacyReviewRatings, ...newRatings].filter(
         (r): r is number => r >= 1 && r <= 5
       );
 

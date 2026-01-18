@@ -478,19 +478,30 @@ async findAll() {
       }
       
       // Преобразуем старые отзывы к формату, похожему на новые (для объединения)
-      const formattedLegacyReviews = legacyReviews.map((legacyReview: any, index: number) => ({
-        id: `legacy-${expert.id}-${index}`,
-        expertId: expert.id,
-        text: legacyReview.text || '',
-        rating: null,
-        authorName: 'Гость',
-        status: 'approved',
-        expertReply: legacyReview.expertReply || null,
-        expertName: expert.name,
-        createdAt: legacyReview.date ? new Date(legacyReview.date) : expert.createdAt,
-        updatedAt: legacyReview.date ? new Date(legacyReview.date) : expert.createdAt,
-        source: 'legacy',
-      }));
+      const formattedLegacyReviews = legacyReviews.map((legacyReview: any, index: number) => {
+        // Извлекаем рейтинг из старого отзыва (может быть в разных форматах)
+        let rating = null;
+        if (legacyReview.rating !== undefined && legacyReview.rating !== null) {
+          const ratingValue = Number(legacyReview.rating);
+          if (!isNaN(ratingValue) && ratingValue >= 1 && ratingValue <= 5) {
+            rating = ratingValue;
+          }
+        }
+        
+        return {
+          id: `legacy-${expert.id}-${index}`,
+          expertId: expert.id,
+          text: legacyReview.text || '',
+          rating: rating,
+          authorName: 'Гость',
+          status: 'approved',
+          expertReply: legacyReview.expertReply || null,
+          expertName: expert.name,
+          createdAt: legacyReview.date ? new Date(legacyReview.date) : expert.createdAt,
+          updatedAt: legacyReview.date ? new Date(legacyReview.date) : expert.createdAt,
+          source: 'legacy',
+        };
+      });
       
       // Объединяем старые и новые отзывы
       const allReviews = [...formattedLegacyReviews, ...newReviews];
@@ -574,19 +585,30 @@ async findAll() {
     }
     
     // Преобразуем старые отзывы к формату, похожему на новые (для объединения)
-    const formattedLegacyReviews = legacyReviews.map((legacyReview: any, index: number) => ({
-      id: `legacy-${expert.id}-${index}`,
-      expertId: expert.id,
-      text: legacyReview.text || '',
-      rating: legacyReview.rating || null,
-      authorName: 'Гость',
-      status: 'approved',
-      expertReply: legacyReview.expertReply || null,
-      expertName: expert.name,
-      createdAt: legacyReview.date ? new Date(legacyReview.date) : expert.createdAt,
-      updatedAt: legacyReview.date ? new Date(legacyReview.date) : expert.createdAt,
-      source: 'legacy',
-    }));
+    const formattedLegacyReviews = legacyReviews.map((legacyReview: any, index: number) => {
+      // Извлекаем рейтинг из старого отзыва (может быть в разных форматах)
+      let rating = null;
+      if (legacyReview.rating !== undefined && legacyReview.rating !== null) {
+        const ratingValue = Number(legacyReview.rating);
+        if (!isNaN(ratingValue) && ratingValue >= 1 && ratingValue <= 5) {
+          rating = ratingValue;
+        }
+      }
+      
+      return {
+        id: `legacy-${expert.id}-${index}`,
+        expertId: expert.id,
+        text: legacyReview.text || '',
+        rating: rating,
+        authorName: 'Гость',
+        status: 'approved',
+        expertReply: legacyReview.expertReply || null,
+        expertName: expert.name,
+        createdAt: legacyReview.date ? new Date(legacyReview.date) : expert.createdAt,
+        updatedAt: legacyReview.date ? new Date(legacyReview.date) : expert.createdAt,
+        source: 'legacy',
+      };
+    });
     
     // Объединяем старые и новые отзывы
     const allReviews = [...formattedLegacyReviews, ...newReviews];
