@@ -558,6 +558,14 @@ async findAll() {
     })
   );
   
+  // Проверяем результат для Константина
+  const konstantinResult = expertsWithReviews.find(e => e.id === '6209828459');
+  if (konstantinResult) {
+    console.log(`✅ КОНСТАНТИН В РЕЗУЛЬТАТЕ: reviewsCount=${konstantinResult.reviewsCount}, reviews.length=${konstantinResult.reviews?.length || 0}`);
+  } else {
+    console.log(`❌ Константин НЕ найден в результате Promise.all`);
+  }
+  
   return expertsWithReviews;
 }
 
