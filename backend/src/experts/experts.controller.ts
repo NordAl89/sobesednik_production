@@ -469,16 +469,6 @@ async findAll() {
       // Получаем новые APPROVED отзывы из таблицы reviews
       const newReviews = await this.reviewsService.getApprovedReviewsForExpert(expert.id);
       
-      // Дополнительное логирование для Константина Северьянова (ID: 6209828459)
-      if (expert.id === '6209828459') {
-        console.log(`🔍 ОТЛАДКА Константин Северьянов (ID: ${expert.id}):`);
-        console.log(`  - expert.reviews (RAW):`, expert.reviews);
-        console.log(`  - legacyReviews (parsed):`, legacyReviews.length, legacyReviews);
-        console.log(`  - newReviews (from DB, APPROVED only):`, newReviews.length, newReviews.map(r => ({ id: r.id, status: r.status, text: r.text?.substring(0, 50) })));
-        console.log(`  - allReviews:`, allReviews.length);
-        console.log(`  - totalReviewsCount:`, totalReviewsCount);
-      }
-      
       // Преобразуем старые отзывы к формату, похожему на новые (для объединения)
       const formattedLegacyReviews = legacyReviews.map((legacyReview: any, index: number) => ({
         id: `legacy-${expert.id}-${index}`,
@@ -499,6 +489,16 @@ async findAll() {
       
       // Общее количество отзывов (гарантируем, что это число)
       const totalReviewsCount = Number(allReviews.length) || 0;
+      
+      // Дополнительное логирование для Константина Северьянова (ID: 6209828459)
+      if (expert.id === '6209828459') {
+        console.log(`🔍 ОТЛАДКА Константин Северьянов (ID: ${expert.id}):`);
+        console.log(`  - expert.reviews (RAW):`, expert.reviews);
+        console.log(`  - legacyReviews (parsed):`, legacyReviews.length, JSON.stringify(legacyReviews.slice(0, 2)));
+        console.log(`  - newReviews (from DB, APPROVED only):`, newReviews.length, newReviews.map(r => ({ id: r.id, status: r.status, text: r.text?.substring(0, 50) })));
+        console.log(`  - allReviews:`, allReviews.length);
+        console.log(`  - totalReviewsCount:`, totalReviewsCount);
+      }
       
       // Логирование для отладки (первые 3 эксперта)
       if (expertIndex < 3) {
