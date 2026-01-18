@@ -90,13 +90,8 @@ export class ReviewsService {
      ПОЛУЧЕНИЕ ОТЗЫВОВ ДЛЯ СТРАНИЦЫ ЭКСПЕРТА
      ===================================================== */
 
-<<<<<<< HEAD
-  async getApprovedReviewsForExpert(expertId: string): Promise<Review[]> {
-    return await this.reviewsRepository.find({
-=======
   async getApprovedReviewsForExpert(expertId: string): Promise<any[]> {
     const reviews = await this.reviewsRepository.find({
->>>>>>> f113449 (Update review display format and enable IP check)
       where: {
         expertId,
         status: ReviewStatus.APPROVED,
@@ -105,8 +100,6 @@ export class ReviewsService {
         createdAt: 'DESC',
       },
     });
-<<<<<<< HEAD
-=======
 
     // Получаем имя эксперта для добавления к каждому отзыву
     const expert = await this.expertsService.findOne(expertId);
@@ -117,7 +110,6 @@ export class ReviewsService {
       ...review,
       expertName,
     }));
->>>>>>> f113449 (Update review display format and enable IP check)
   }
 
   /* =====================================================

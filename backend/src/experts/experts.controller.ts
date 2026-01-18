@@ -450,46 +450,58 @@ async findAll() {
   // Возвращаем только активных и проверенных экспертов для публичного списка
   const experts = await this.expertsService.findAllActive();
   console.log(`📊 Найдено активных экспертов: ${experts.length}`);
-  return experts.map(expert => {
-    // Парсим отзывы для подсчета количества
-    let reviews = [];
-    if (expert.reviews) {
-      try {
-        reviews = JSON.parse(expert.reviews);
-      } catch (e) {
-        console.warn('Ошибка парсинга отзывов');
-        reviews = [];
+  
+  // Получаем новые отзывы для всех экспертов параллельно
+  const expertsWithReviews = await Promise.all(
+    experts.map(async (expert) => {
+      // Парсим старые отзывы из JSON
+      let legacyReviews = [];
+      if (expert.reviews) {
+        try {
+          legacyReviews = JSON.parse(expert.reviews);
+        } catch (e) {
+          console.warn('Ошибка парсинга отзывов');
+          legacyReviews = [];
+        }
       }
-    }
-    
-    return {
-     id: expert.id,
-      login: expert.login,
-      name: expert.name,
-      age: expert.age,
-      gender: expert.gender,
-      availability: expert.availability,
-      about: expert.about,
-      price: expert.price,
-      mainPhotoUrl: expert.mainPhotoUrl,
-      rating: expert.rating,
-      totalSessions: expert.totalSessions,
-      status: expert.status,
-      adminVerified: expert.adminVerified,
-      expertIsVerified: expert.expertIsVerified,
-      telegram: expert.telegram,
-      otherMessengers: expert.otherMessengers,
-      allowedTopics: expert.allowedTopics,
-      forbiddenTopics: expert.forbiddenTopics,
-      adultTopics: expert.adultTopics,
-      noForbiddenTopics: expert.noForbiddenTopics,
-      createdAt: expert.createdAt,
-      updatedAt: expert.updatedAt,
-      alwaysAvailable: expert.alwaysAvailable,
-      reviews: reviews, // ← ДОБАВЛЯЕМ ОТЗЫВЫ
-      reviewsCount: reviews.length // ← И количество отзывов для удобства
-    };
-  });
+      
+      // Получаем новые APPROVED отзывы из таблицы reviews
+      const newReviews = await this.reviewsService.getApprovedReviewsForExpert(expert.id);
+      
+      // Общее количество отзывов
+      const totalReviewsCount = legacyReviews.length + newReviews.length;
+      
+      return {
+       id: expert.id,
+        login: expert.login,
+        name: expert.name,
+        age: expert.age,
+        gender: expert.gender,
+        availability: expert.availability,
+        about: expert.about,
+        price: expert.price,
+        mainPhotoUrl: expert.mainPhotoUrl,
+        rating: expert.rating,
+        totalSessions: expert.totalSessions,
+        status: expert.status,
+        adminVerified: expert.adminVerified,
+        expertIsVerified: expert.expertIsVerified,
+        telegram: expert.telegram,
+        otherMessengers: expert.otherMessengers,
+        allowedTopics: expert.allowedTopics,
+        forbiddenTopics: expert.forbiddenTopics,
+        adultTopics: expert.adultTopics,
+        noForbiddenTopics: expert.noForbiddenTopics,
+        createdAt: expert.createdAt,
+        updatedAt: expert.updatedAt,
+        alwaysAvailable: expert.alwaysAvailable,
+        reviews: legacyReviews, // сохраняем legacy формат для совместимости
+        reviewsCount: totalReviewsCount // ← теперь учитывает оба источника
+      };
+    })
+  );
+  
+  return expertsWithReviews;
 }
 
   @Get('debug/:id')
