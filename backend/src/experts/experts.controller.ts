@@ -475,7 +475,18 @@ async findAll() {
       }
       
       // Получаем новые APPROVED отзывы из таблицы reviews
-      const newReviews = await this.reviewsService.getApprovedReviewsForExpert(expert.id);
+      let newReviews = [];
+      try {
+        newReviews = await this.reviewsService.getApprovedReviewsForExpert(expert.id);
+        
+        // Отладка для Константина
+        if (expert.id === '6209828459') {
+          console.log(`✅ getApprovedReviewsForExpert для ${expert.id} вернул ${newReviews.length} отзывов`);
+        }
+      } catch (error) {
+        console.error(`❌ Ошибка получения отзывов для эксперта ${expert.id}:`, error.message);
+        newReviews = [];
+      }
       
       // Преобразуем старые отзывы к формату, похожему на новые (для объединения)
       const formattedLegacyReviews = legacyReviews.map((legacyReview: any, index: number) => ({
