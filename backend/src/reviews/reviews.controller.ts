@@ -96,7 +96,7 @@ export class ReviewsController {
     
     for (const expert of experts) {
       try {
-        await this.reviewsService['updateExpertRating'](expert.id);
+        await this.reviewsService.updateExpertRating(expert.id);
         updated++;
       } catch (error) {
         console.error(`Ошибка пересчета рейтинга для эксперта ${expert.id}:`, error);
