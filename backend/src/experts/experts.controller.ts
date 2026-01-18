@@ -511,6 +511,27 @@ async findAll() {
           }
         }
         
+        // Если в отзыве нет рейтинга, но есть рейтинги в expert.ratings (даже если количество не совпадает),
+        // используем рейтинг по индексу (если индекс в пределах массива)
+        if (rating === null && legacyRatings.length > 0 && index < legacyRatings.length) {
+          const ratingValue = legacyRatings[index];
+          if (ratingValue !== undefined && ratingValue !== null) {
+            const numValue = Number(ratingValue);
+            if (!isNaN(numValue) && numValue >= 1 && numValue <= 5) {
+              rating = numValue;
+            }
+          }
+        }
+        
+        // Если в отзыве нет рейтинга и нет в expert.ratings, но есть общий рейтинг эксперта,
+        // используем его для всех отзывов (fallback)
+        if (rating === null && expert.rating && expert.rating > 0) {
+          const expertRating = Number(expert.rating);
+          if (!isNaN(expertRating) && expertRating >= 1 && expertRating <= 5) {
+            rating = Math.round(expertRating); // Округляем до целого числа
+          }
+        }
+        
         return {
           id: `legacy-${expert.id}-${index}`,
           expertId: expert.id,
@@ -638,6 +659,27 @@ async findAll() {
           if (!isNaN(numValue) && numValue >= 1 && numValue <= 5) {
             rating = numValue;
           }
+        }
+      }
+      
+      // Если в отзыве нет рейтинга, но есть рейтинги в expert.ratings (даже если количество не совпадает),
+      // используем рейтинг по индексу (если индекс в пределах массива)
+      if (rating === null && legacyRatings.length > 0 && index < legacyRatings.length) {
+        const ratingValue = legacyRatings[index];
+        if (ratingValue !== undefined && ratingValue !== null) {
+          const numValue = Number(ratingValue);
+          if (!isNaN(numValue) && numValue >= 1 && numValue <= 5) {
+            rating = numValue;
+          }
+        }
+      }
+      
+      // Если в отзыве нет рейтинга и нет в expert.ratings, но есть общий рейтинг эксперта,
+      // используем его для всех отзывов (fallback)
+      if (rating === null && expert.rating && expert.rating > 0) {
+        const expertRating = Number(expert.rating);
+        if (!isNaN(expertRating) && expertRating >= 1 && expertRating <= 5) {
+          rating = Math.round(expertRating); // Округляем до целого числа
         }
       }
       
