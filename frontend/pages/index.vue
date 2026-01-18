@@ -362,9 +362,9 @@ onMounted(async () => {
   updateScrollTopButtonPosition()
 });
 
-// при изменении фильтров или поиска — сброс страницы
+// при изменении фильтров, поиска или сортировки — сброс страницы
 watch(
-  [searchQuery, filters],
+  [searchQuery, filters, sortOption],
   () => {
     currentPage.value = 1;
   },
