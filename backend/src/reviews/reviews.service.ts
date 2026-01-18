@@ -91,12 +91,6 @@ export class ReviewsService {
      ===================================================== */
 
   async getApprovedReviewsForExpert(expertId: string): Promise<any[]> {
-    // Отладка для Константина
-    if (expertId === '6209828459') {
-      console.log(`🔍 getApprovedReviewsForExpert вызван для expertId: "${expertId}" (тип: ${typeof expertId})`);
-      console.log(`  - Ищем отзывы с expertId="${expertId}" и status="${ReviewStatus.APPROVED}"`);
-    }
-    
     const reviews = await this.reviewsRepository.find({
       where: {
         expertId,
@@ -106,14 +100,6 @@ export class ReviewsService {
         createdAt: 'DESC',
       },
     });
-    
-    // Отладка для Константина
-    if (expertId === '6209828459') {
-      console.log(`  - Найдено отзывов: ${reviews.length}`);
-      if (reviews.length > 0) {
-        console.log(`  - Первый отзыв:`, { id: reviews[0].id, expertId: reviews[0].expertId, status: reviews[0].status, text: reviews[0].text?.substring(0, 30) });
-      }
-    }
 
     // Получаем имя эксперта для добавления к каждому отзыву
     const expert = await this.expertsService.findOne(expertId);

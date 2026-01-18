@@ -451,14 +451,6 @@ async findAll() {
   const experts = await this.expertsService.findAllActive();
   console.log(`📊 Найдено активных экспертов: ${experts.length}`);
   
-  // Проверяем, есть ли Константин в списке
-  const konstantin = experts.find(e => e.id === '6209828459');
-  if (konstantin) {
-    console.log(`✅ Константин найден в списке: ${konstantin.name}, reviews поле: ${konstantin.reviews ? konstantin.reviews.substring(0, 100) : 'null/undefined'}`);
-  } else {
-    console.log(`❌ Константин НЕ найден в списке активных экспертов`);
-  }
-  
   // Получаем новые отзывы для всех экспертов параллельно
   const expertsWithReviews = await Promise.all(
     experts.map(async (expert, expertIndex) => {
@@ -480,11 +472,6 @@ async findAll() {
         // Гарантируем, что expert.id это строка
         const expertIdStr = String(expert.id);
         newReviews = await this.reviewsService.getApprovedReviewsForExpert(expertIdStr);
-        
-        // Отладка для Константина
-        if (expert.id === '6209828459') {
-          console.log(`✅ getApprovedReviewsForExpert для ${expert.id} вернул ${newReviews.length} отзывов`);
-        }
       } catch (error) {
         console.error(`❌ Ошибка получения отзывов для эксперта ${expert.id}:`, error instanceof Error ? error.message : String(error));
         newReviews = [];
@@ -511,23 +498,9 @@ async findAll() {
       // Общее количество отзывов (гарантируем, что это число)
       const totalReviewsCount = Number(allReviews.length) || 0;
       
-      // Логирование для отладки (первые 3 эксперта и Константин)
-      if (expertIndex < 3 || expert.id === '6209828459') {
+      // Логирование для отладки (только первые 3 эксперта)
+      if (expertIndex < 3) {
         console.log(`📊 Эксперт ${expert.name} (ID: ${expert.id}): legacy=${legacyReviews.length}, new=${newReviews.length}, total=${totalReviewsCount}`);
-        
-        // Дополнительное логирование для Константина Северьянова
-        if (expert.id === '6209828459') {
-          console.log(`🔍🔍🔍 ОТЛАДКА КОНСТАНТИН СЕВЕРЬЯНОВ (ID: ${expert.id}) 🔍🔍🔍`);
-          console.log(`  - expert.reviews (RAW, первые 300 символов):`, expert.reviews ? expert.reviews.substring(0, 300) : 'null/undefined');
-          console.log(`  - legacyReviews.length:`, legacyReviews.length);
-          console.log(`  - legacyReviews (первые 2):`, JSON.stringify(legacyReviews.slice(0, 2)));
-          console.log(`  - newReviews.length:`, newReviews.length);
-          console.log(`  - newReviews (детали):`, newReviews.map(r => ({ id: r.id, status: r.status, text: r.text?.substring(0, 50) })));
-          console.log(`  - formattedLegacyReviews.length:`, formattedLegacyReviews.length);
-          console.log(`  - allReviews.length:`, allReviews.length);
-          console.log(`  - totalReviewsCount:`, totalReviewsCount);
-          console.log(`🔍🔍🔍 КОНЕЦ ОТЛАДКИ КОНСТАНТИНА 🔍🔍🔍`);
-        }
       }
       
       return {
@@ -559,14 +532,6 @@ async findAll() {
       };
     })
   );
-  
-  // Проверяем результат для Константина
-  const konstantinResult = expertsWithReviews.find(e => e.id === '6209828459');
-  if (konstantinResult) {
-    console.log(`✅ КОНСТАНТИН В РЕЗУЛЬТАТЕ: reviewsCount=${konstantinResult.reviewsCount}, reviews.length=${konstantinResult.reviews?.length || 0}`);
-  } else {
-    console.log(`❌ Константин НЕ найден в результате Promise.all`);
-  }
   
   return expertsWithReviews;
 }
