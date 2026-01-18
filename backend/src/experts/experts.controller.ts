@@ -490,19 +490,19 @@ async findAll() {
       // Общее количество отзывов (гарантируем, что это число)
       const totalReviewsCount = Number(allReviews.length) || 0;
       
-      // Дополнительное логирование для Константина Северьянова (ID: 6209828459)
-      if (expert.id === '6209828459') {
-        console.log(`🔍 ОТЛАДКА Константин Северьянов (ID: ${expert.id}):`);
-        console.log(`  - expert.reviews (RAW):`, expert.reviews);
-        console.log(`  - legacyReviews (parsed):`, legacyReviews.length, JSON.stringify(legacyReviews.slice(0, 2)));
-        console.log(`  - newReviews (from DB, APPROVED only):`, newReviews.length, newReviews.map(r => ({ id: r.id, status: r.status, text: r.text?.substring(0, 50) })));
-        console.log(`  - allReviews:`, allReviews.length);
-        console.log(`  - totalReviewsCount:`, totalReviewsCount);
-      }
-      
-      // Логирование для отладки (первые 3 эксперта)
-      if (expertIndex < 3) {
+      // Логирование для отладки (первые 3 эксперта и Константин)
+      if (expertIndex < 3 || expert.id === '6209828459') {
         console.log(`📊 Эксперт ${expert.name} (ID: ${expert.id}): legacy=${legacyReviews.length}, new=${newReviews.length}, total=${totalReviewsCount}`);
+        
+        // Дополнительное логирование для Константина Северьянова
+        if (expert.id === '6209828459') {
+          console.log(`  🔍 ОТЛАДКА Константин Северьянов:`);
+          console.log(`    - expert.reviews (RAW):`, expert.reviews ? expert.reviews.substring(0, 200) : 'null/undefined');
+          console.log(`    - legacyReviews:`, JSON.stringify(legacyReviews.slice(0, 2)));
+          console.log(`    - newReviews:`, newReviews.map(r => ({ id: r.id, status: r.status, text: r.text?.substring(0, 50) })));
+          console.log(`    - allReviews.length:`, allReviews.length);
+          console.log(`    - totalReviewsCount:`, totalReviewsCount);
+        }
       }
       
       return {
