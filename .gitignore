@@ -28,6 +28,3 @@ backend/uploads/
 .env
 .env.*
 !.env.example
-
-# Cursor IDE
-.cursor/
