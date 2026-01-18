@@ -248,12 +248,6 @@ const sortedExperts = computed(() => {
         const reviewsCountA = typeof a.reviewsCount === 'number' ? a.reviewsCount : (Array.isArray(a.reviews) ? a.reviews.length : 0);
         const reviewsCountB = typeof b.reviewsCount === 'number' ? b.reviewsCount : (Array.isArray(b.reviews) ? b.reviews.length : 0);
         
-        // Отладка: показываем первые 5 экспертов при сортировке
-        const isDebug = experts.length > 0 && (experts.indexOf(a) < 5 || experts.indexOf(b) < 5 || a.id === '6209828459' || b.id === '6209828459');
-        if (isDebug && (a.id === '6209828459' || b.id === '6209828459')) {
-          console.log(`🔍 Сортировка по отзывам: ${a.name} (${reviewsCountA} отзывов) vs ${b.name} (${reviewsCountB} отзывов)`);
-        }
-        
         return reviewsCountB - reviewsCountA; // от большего к меньшему
       });
     case "new":

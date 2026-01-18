@@ -335,7 +335,7 @@ export const useExpertsStore = defineStore("experts", {
 
         console.log(`✅ Получено экспертов с сервера: ${response.length}`);
         
-        // Логируем первого эксперта и Константина для отладки
+        // Логируем первого эксперта для отладки
         if (response.length > 0) {
           console.log('📋 Пример данных с сервера (первый эксперт):', {
             id: response[0].id,
@@ -344,19 +344,6 @@ export const useExpertsStore = defineStore("experts", {
             reviewsCountType: typeof response[0].reviewsCount,
             reviewsLength: Array.isArray(response[0].reviews) ? response[0].reviews.length : 'не массив',
           });
-          
-          // Ищем Константина в ответе
-          const konstantin = response.find(e => e.id === '6209828459');
-          if (konstantin) {
-            console.log('🔍 Данные Константина Северьянова с сервера:', {
-              id: konstantin.id,
-              name: konstantin.name,
-              reviewsCount: konstantin.reviewsCount,
-              reviewsCountType: typeof konstantin.reviewsCount,
-              reviewsLength: Array.isArray(konstantin.reviews) ? konstantin.reviews.length : 'не массив',
-              reviews: konstantin.reviews ? (Array.isArray(konstantin.reviews) ? `${konstantin.reviews.length} отзывов` : 'не массив') : 'null',
-            });
-          }
         }
 
         this.experts = response.map((serverExpert) => {
