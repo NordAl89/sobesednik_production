@@ -219,29 +219,40 @@ const sortOptions = [
 ];
 
 const sortedExperts = computed(() => {
-  // создаём копию массива, чтобы не мутировать store.experts
+  // создаём копию массива и сортируем
   const experts = [...filteredExperts.value];
 
+  if (!sortOption.value) {
+    return experts;
+  }
+
+  // Сортируем копию массива
   switch (sortOption.value) {
     case "rating":
-      return experts.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+      return experts.slice().sort((a, b) => {
+        const ratingA = parseFloat(a.rating) || 0;
+        const ratingB = parseFloat(b.rating) || 0;
+        return ratingB - ratingA; // от большего к меньшему
+      });
     case "reviews":
-      return experts.sort((a, b) => {
+      return experts.slice().sort((a, b) => {
         // Используем reviewsCount если он есть, иначе считаем длину массива reviews
-        const reviewsCountA =
-          a.reviewsCount || (Array.isArray(a.reviews) ? a.reviews.length : 0);
-        const reviewsCountB =
-          b.reviewsCount || (Array.isArray(b.reviews) ? b.reviews.length : 0);
+        const reviewsCountA = Number(a.reviewsCount) || (Array.isArray(a.reviews) ? a.reviews.length : 0);
+        const reviewsCountB = Number(b.reviewsCount) || (Array.isArray(b.reviews) ? b.reviews.length : 0);
         return reviewsCountB - reviewsCountA; // от большего к меньшему
       });
     case "new":
-      return experts.sort(
-        (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
-      );
+      return experts.slice().sort((a, b) => {
+        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return dateB - dateA; // от новых к старым
+      });
     case "old":
-      return experts.sort(
-        (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
-      );
+      return experts.slice().sort((a, b) => {
+        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return dateA - dateB; // от старых к новым
+      });
     default:
       return experts;
   }

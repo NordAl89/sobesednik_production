@@ -342,7 +342,10 @@ export const useExpertsStore = defineStore("experts", {
 
           return {
             ...serverExpert,
-            reviews: localExpert?.reviews || serverExpert.reviews || [],
+            // Используем reviews с сервера, так как они уже объединены (legacy + новые)
+            reviews: serverExpert.reviews || [],
+            // reviewsCount должен приходить с сервера
+            reviewsCount: serverExpert.reviewsCount || (Array.isArray(serverExpert.reviews) ? serverExpert.reviews.length : 0),
             sessions: localExpert?.sessions || serverExpert.sessions || [],
           };
         });
