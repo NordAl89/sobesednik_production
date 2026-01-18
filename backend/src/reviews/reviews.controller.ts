@@ -85,6 +85,31 @@ export class ReviewsController {
     return this.reviewsService.getRatingStats(expertId);
   }
 
+  /**
+   * Пересчет рейтингов всех экспертов (учитывает рейтинги из legacy отзывов)
+   * Использовать один раз для обновления всех рейтингов
+   */
+  @Post('recalculate-all-ratings')
+  async recalculateAllRatings() {
+    const experts = await this.reviewsService['expertsService'].findAll();
+    let updated = 0;
+    
+    for (const expert of experts) {
+      try {
+        await this.reviewsService['updateExpertRating'](expert.id);
+        updated++;
+      } catch (error) {
+        console.error(`Ошибка пересчета рейтинга для эксперта ${expert.id}:`, error);
+      }
+    }
+    
+    return { 
+      message: `Рейтинги пересчитаны для ${updated} из ${experts.length} экспертов`,
+      total: experts.length,
+      updated 
+    };
+  }
+
   /* =====================================================
      СОБЕСЕДНИК
      ===================================================== */
