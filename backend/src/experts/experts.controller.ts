@@ -469,7 +469,7 @@ async findAll() {
           const parsed = JSON.parse(expert.reviews);
           legacyReviews = Array.isArray(parsed) ? parsed : [];
         } catch (e) {
-          console.warn(`⚠️ Ошибка парсинга отзывов для эксперта ${expert.id} (${expert.name}):`, e.message);
+          console.warn(`⚠️ Ошибка парсинга отзывов для эксперта ${expert.id} (${expert.name}):`, e instanceof Error ? e.message : String(e));
           legacyReviews = [];
         }
       }
@@ -486,7 +486,7 @@ async findAll() {
           console.log(`✅ getApprovedReviewsForExpert для ${expert.id} вернул ${newReviews.length} отзывов`);
         }
       } catch (error) {
-        console.error(`❌ Ошибка получения отзывов для эксперта ${expert.id}:`, error.message);
+        console.error(`❌ Ошибка получения отзывов для эксперта ${expert.id}:`, error instanceof Error ? error.message : String(error));
         newReviews = [];
       }
       
