@@ -477,14 +477,37 @@ async findAll() {
         newReviews = [];
       }
       
+      // Парсим рейтинги из expert.ratings (старая система хранила рейтинги отдельно)
+      let legacyRatings: number[] = [];
+      if (expert.ratings) {
+        try {
+          const parsed = JSON.parse(expert.ratings);
+          legacyRatings = Array.isArray(parsed) ? parsed : [];
+        } catch (e) {
+          legacyRatings = [];
+        }
+      }
+      
       // Преобразуем старые отзывы к формату, похожему на новые (для объединения)
       const formattedLegacyReviews = legacyReviews.map((legacyReview: any, index: number) => {
-        // Извлекаем рейтинг из старого отзыва (может быть в разных форматах)
+        // Сначала пытаемся извлечь рейтинг из самого отзыва
         let rating = null;
         if (legacyReview.rating !== undefined && legacyReview.rating !== null) {
           const ratingValue = Number(legacyReview.rating);
           if (!isNaN(ratingValue) && ratingValue >= 1 && ratingValue <= 5) {
             rating = ratingValue;
+          }
+        }
+        
+        // Если в отзыве нет рейтинга, но есть рейтинги в expert.ratings и количество совпадает,
+        // сопоставляем рейтинг по индексу
+        if (rating === null && legacyRatings.length > 0 && legacyRatings.length === legacyReviews.length) {
+          const ratingValue = legacyRatings[index];
+          if (ratingValue !== undefined && ratingValue !== null) {
+            const numValue = Number(ratingValue);
+            if (!isNaN(numValue) && numValue >= 1 && numValue <= 5) {
+              rating = numValue;
+            }
           }
         }
         
@@ -584,14 +607,37 @@ async findAll() {
       newReviews = [];
     }
     
+    // Парсим рейтинги из expert.ratings (старая система хранила рейтинги отдельно)
+    let legacyRatings: number[] = [];
+    if (expert.ratings) {
+      try {
+        const parsed = JSON.parse(expert.ratings);
+        legacyRatings = Array.isArray(parsed) ? parsed : [];
+      } catch (e) {
+        legacyRatings = [];
+      }
+    }
+    
     // Преобразуем старые отзывы к формату, похожему на новые (для объединения)
     const formattedLegacyReviews = legacyReviews.map((legacyReview: any, index: number) => {
-      // Извлекаем рейтинг из старого отзыва (может быть в разных форматах)
+      // Сначала пытаемся извлечь рейтинг из самого отзыва
       let rating = null;
       if (legacyReview.rating !== undefined && legacyReview.rating !== null) {
         const ratingValue = Number(legacyReview.rating);
         if (!isNaN(ratingValue) && ratingValue >= 1 && ratingValue <= 5) {
           rating = ratingValue;
+        }
+      }
+      
+      // Если в отзыве нет рейтинга, но есть рейтинги в expert.ratings и количество совпадает,
+      // сопоставляем рейтинг по индексу
+      if (rating === null && legacyRatings.length > 0 && legacyRatings.length === legacyReviews.length) {
+        const ratingValue = legacyRatings[index];
+        if (ratingValue !== undefined && ratingValue !== null) {
+          const numValue = Number(ratingValue);
+          if (!isNaN(numValue) && numValue >= 1 && numValue <= 5) {
+            rating = numValue;
+          }
         }
       }
       
