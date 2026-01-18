@@ -458,9 +458,10 @@ async findAll() {
       let legacyReviews = [];
       if (expert.reviews) {
         try {
-          legacyReviews = JSON.parse(expert.reviews);
+          const parsed = JSON.parse(expert.reviews);
+          legacyReviews = Array.isArray(parsed) ? parsed : [];
         } catch (e) {
-          console.warn('Ошибка парсинга отзывов');
+          console.warn(`⚠️ Ошибка парсинга отзывов для эксперта ${expert.id} (${expert.name}):`, e.message);
           legacyReviews = [];
         }
       }
@@ -488,6 +489,12 @@ async findAll() {
       
       // Общее количество отзывов (гарантируем, что это число)
       const totalReviewsCount = Number(allReviews.length) || 0;
+      
+      // Логирование для отладки (первые 3 эксперта)
+      const expertIndex = experts.indexOf(expert);
+      if (expertIndex < 3) {
+        console.log(`📊 Эксперт ${expert.name} (ID: ${expert.id}): legacy=${legacyReviews.length}, new=${newReviews.length}, total=${totalReviewsCount}`);
+      }
       
       return {
        id: expert.id,
