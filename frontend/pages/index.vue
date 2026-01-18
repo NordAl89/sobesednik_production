@@ -236,13 +236,10 @@ const sortedExperts = computed(() => {
       });
     case "reviews":
       return experts.slice().sort((a, b) => {
-        // Используем reviewsCount если он есть, иначе считаем длину массива reviews
-        const reviewsCountA = Number(a.reviewsCount ?? (Array.isArray(a.reviews) ? a.reviews.length : 0));
-        const reviewsCountB = Number(b.reviewsCount ?? (Array.isArray(b.reviews) ? b.reviews.length : 0));
-        // Отладка
-        if (process.client && window.location.search.includes('debug=1')) {
-          console.log(`Сортировка: ${a.name} (${reviewsCountA}) vs ${b.name} (${reviewsCountB})`);
-        }
+        // Вычисляем reviewsCount: приоритет - значение поля, иначе длина массива reviews
+        const reviewsCountA = typeof a.reviewsCount === 'number' ? a.reviewsCount : (Array.isArray(a.reviews) ? a.reviews.length : 0);
+        const reviewsCountB = typeof b.reviewsCount === 'number' ? b.reviewsCount : (Array.isArray(b.reviews) ? b.reviews.length : 0);
+        
         return reviewsCountB - reviewsCountA; // от большего к меньшему
       });
     case "new":

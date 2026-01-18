@@ -340,12 +340,17 @@ export const useExpertsStore = defineStore("experts", {
             (e) => e.id === serverExpert.id
           );
 
+          // Вычисляем reviewsCount: приоритет - значение с сервера, иначе длина массива reviews
+          const reviewsCount = serverExpert.reviewsCount !== undefined && serverExpert.reviewsCount !== null
+            ? Number(serverExpert.reviewsCount)
+            : (Array.isArray(serverExpert.reviews) ? serverExpert.reviews.length : 0);
+
           return {
             ...serverExpert,
             // Используем reviews с сервера, так как они уже объединены (legacy + новые)
-            reviews: serverExpert.reviews || [],
-            // reviewsCount должен приходить с сервера (используем ?? вместо ||, чтобы 0 не заменялся)
-            reviewsCount: serverExpert.reviewsCount ?? (Array.isArray(serverExpert.reviews) ? serverExpert.reviews.length : 0),
+            reviews: Array.isArray(serverExpert.reviews) ? serverExpert.reviews : [],
+            // reviewsCount - обязательно число
+            reviewsCount: reviewsCount,
             sessions: localExpert?.sessions || serverExpert.sessions || [],
           };
         });

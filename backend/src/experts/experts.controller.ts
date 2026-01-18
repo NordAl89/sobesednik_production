@@ -486,8 +486,8 @@ async findAll() {
       // Объединяем старые и новые отзывы
       const allReviews = [...formattedLegacyReviews, ...newReviews];
       
-      // Общее количество отзывов
-      const totalReviewsCount = allReviews.length;
+      // Общее количество отзывов (гарантируем, что это число)
+      const totalReviewsCount = Number(allReviews.length) || 0;
       
       return {
        id: expert.id,
