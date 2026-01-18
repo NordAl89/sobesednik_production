@@ -469,6 +469,11 @@ async findAll() {
       // Получаем новые APPROVED отзывы из таблицы reviews
       const newReviews = await this.reviewsService.getApprovedReviewsForExpert(expert.id);
       
+      // Дополнительное логирование для Константина Северьянова (ID: 6209828459)
+      if (expert.id === '6209828459') {
+        console.log(`🔍 ОТЛАДКА: Константин Северьянов - legacy=${legacyReviews.length}, approved=${newReviews.length}, reviews JSON:`, expert.reviews);
+      }
+      
       // Преобразуем старые отзывы к формату, похожему на новые (для объединения)
       const formattedLegacyReviews = legacyReviews.map((legacyReview: any, index: number) => ({
         id: `legacy-${expert.id}-${index}`,
