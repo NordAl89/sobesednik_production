@@ -226,6 +226,14 @@ const sortedExperts = computed(() => {
     return experts;
   }
 
+  // Логируем при сортировке по отзывам
+  if (sortOption.value === 'reviews' && experts.length > 0) {
+    console.log(`🔍 Сортировка по отзывам активирована. Всего экспертов: ${experts.length}`);
+    experts.slice(0, 3).forEach(expert => {
+      console.log(`  - ${expert.name}: reviewsCount=${expert.reviewsCount} (тип: ${typeof expert.reviewsCount}), reviews.length=${Array.isArray(expert.reviews) ? expert.reviews.length : 'не массив'}`);
+    });
+  }
+
   // Сортируем копию массива
   switch (sortOption.value) {
     case "rating":

@@ -334,6 +334,17 @@ export const useExpertsStore = defineStore("experts", {
         }
 
         console.log(`✅ Получено экспертов с сервера: ${response.length}`);
+        
+        // Логируем первого эксперта для отладки
+        if (response.length > 0) {
+          console.log('📋 Пример данных с сервера (первый эксперт):', {
+            id: response[0].id,
+            name: response[0].name,
+            reviewsCount: response[0].reviewsCount,
+            reviewsCountType: typeof response[0].reviewsCount,
+            reviewsLength: Array.isArray(response[0].reviews) ? response[0].reviews.length : 'не массив',
+          });
+        }
 
         this.experts = response.map((serverExpert) => {
           const localExpert = this.experts.find(
