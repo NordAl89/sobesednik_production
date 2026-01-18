@@ -451,6 +451,14 @@ async findAll() {
   const experts = await this.expertsService.findAllActive();
   console.log(`📊 Найдено активных экспертов: ${experts.length}`);
   
+  // Проверяем, есть ли Константин в списке
+  const konstantin = experts.find(e => e.id === '6209828459');
+  if (konstantin) {
+    console.log(`✅ Константин найден в списке: ${konstantin.name}, reviews поле: ${konstantin.reviews ? konstantin.reviews.substring(0, 100) : 'null/undefined'}`);
+  } else {
+    console.log(`❌ Константин НЕ найден в списке активных экспертов`);
+  }
+  
   // Получаем новые отзывы для всех экспертов параллельно
   const expertsWithReviews = await Promise.all(
     experts.map(async (expert, expertIndex) => {
@@ -496,12 +504,16 @@ async findAll() {
         
         // Дополнительное логирование для Константина Северьянова
         if (expert.id === '6209828459') {
-          console.log(`  🔍 ОТЛАДКА Константин Северьянов:`);
-          console.log(`    - expert.reviews (RAW):`, expert.reviews ? expert.reviews.substring(0, 200) : 'null/undefined');
-          console.log(`    - legacyReviews:`, JSON.stringify(legacyReviews.slice(0, 2)));
-          console.log(`    - newReviews:`, newReviews.map(r => ({ id: r.id, status: r.status, text: r.text?.substring(0, 50) })));
-          console.log(`    - allReviews.length:`, allReviews.length);
-          console.log(`    - totalReviewsCount:`, totalReviewsCount);
+          console.log(`🔍🔍🔍 ОТЛАДКА КОНСТАНТИН СЕВЕРЬЯНОВ (ID: ${expert.id}) 🔍🔍🔍`);
+          console.log(`  - expert.reviews (RAW, первые 300 символов):`, expert.reviews ? expert.reviews.substring(0, 300) : 'null/undefined');
+          console.log(`  - legacyReviews.length:`, legacyReviews.length);
+          console.log(`  - legacyReviews (первые 2):`, JSON.stringify(legacyReviews.slice(0, 2)));
+          console.log(`  - newReviews.length:`, newReviews.length);
+          console.log(`  - newReviews (детали):`, newReviews.map(r => ({ id: r.id, status: r.status, text: r.text?.substring(0, 50) })));
+          console.log(`  - formattedLegacyReviews.length:`, formattedLegacyReviews.length);
+          console.log(`  - allReviews.length:`, allReviews.length);
+          console.log(`  - totalReviewsCount:`, totalReviewsCount);
+          console.log(`🔍🔍🔍 КОНЕЦ ОТЛАДКИ КОНСТАНТИНА 🔍🔍🔍`);
         }
       }
       
