@@ -477,7 +477,9 @@ async findAll() {
       // Получаем новые APPROVED отзывы из таблицы reviews
       let newReviews = [];
       try {
-        newReviews = await this.reviewsService.getApprovedReviewsForExpert(expert.id);
+        // Гарантируем, что expert.id это строка
+        const expertIdStr = String(expert.id);
+        newReviews = await this.reviewsService.getApprovedReviewsForExpert(expertIdStr);
         
         // Отладка для Константина
         if (expert.id === '6209828459') {
