@@ -344,8 +344,8 @@ export const useExpertsStore = defineStore("experts", {
             ...serverExpert,
             // Используем reviews с сервера, так как они уже объединены (legacy + новые)
             reviews: serverExpert.reviews || [],
-            // reviewsCount должен приходить с сервера
-            reviewsCount: serverExpert.reviewsCount || (Array.isArray(serverExpert.reviews) ? serverExpert.reviews.length : 0),
+            // reviewsCount должен приходить с сервера (используем ?? вместо ||, чтобы 0 не заменялся)
+            reviewsCount: serverExpert.reviewsCount ?? (Array.isArray(serverExpert.reviews) ? serverExpert.reviews.length : 0),
             sessions: localExpert?.sessions || serverExpert.sessions || [],
           };
         });
