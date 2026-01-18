@@ -551,16 +551,45 @@ async findAll() {
   async findOne(@Param('id') id: string) {
     const expert = await this.expertsService.findOne(id);
     
-    // Парсим отзывы из JSON строки
-    let reviews = [];
+    // Парсим старые отзывы из JSON строки
+    let legacyReviews = [];
     if (expert.reviews) {
       try {
-        reviews = JSON.parse(expert.reviews);
+        const parsed = JSON.parse(expert.reviews);
+        legacyReviews = Array.isArray(parsed) ? parsed : [];
       } catch (e) {
         console.warn('Ошибка парсинга отзывов');
-        reviews = [];
+        legacyReviews = [];
       }
     }
+    
+    // Получаем новые APPROVED отзывы из таблицы reviews
+    let newReviews = [];
+    try {
+      const expertIdStr = String(expert.id);
+      newReviews = await this.reviewsService.getApprovedReviewsForExpert(expertIdStr);
+    } catch (error) {
+      console.error(`❌ Ошибка получения отзывов для эксперта ${expert.id}:`, error instanceof Error ? error.message : String(error));
+      newReviews = [];
+    }
+    
+    // Преобразуем старые отзывы к формату, похожему на новые (для объединения)
+    const formattedLegacyReviews = legacyReviews.map((legacyReview: any, index: number) => ({
+      id: `legacy-${expert.id}-${index}`,
+      expertId: expert.id,
+      text: legacyReview.text || '',
+      rating: legacyReview.rating || null,
+      authorName: 'Гость',
+      status: 'approved',
+      expertReply: legacyReview.expertReply || null,
+      expertName: expert.name,
+      createdAt: legacyReview.date ? new Date(legacyReview.date) : expert.createdAt,
+      updatedAt: legacyReview.date ? new Date(legacyReview.date) : expert.createdAt,
+      source: 'legacy',
+    }));
+    
+    // Объединяем старые и новые отзывы
+    const allReviews = [...formattedLegacyReviews, ...newReviews];
     
     return {
       id: expert.id,
@@ -591,7 +620,8 @@ async findAll() {
       publishedAt: expert.publishedAt,
       expiresAt: expert.expiresAt,
       expiredAt: expert.expiredAt, // Дата попадания в "Истекшие"
-      reviews: reviews
+      reviews: allReviews, // объединенные старые и новые отзывы
+      reviewsCount: allReviews.length // общее количество отзывов
     };
   }
 
