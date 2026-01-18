@@ -468,8 +468,26 @@ async findAll() {
       // Получаем новые APPROVED отзывы из таблицы reviews
       const newReviews = await this.reviewsService.getApprovedReviewsForExpert(expert.id);
       
+      // Преобразуем старые отзывы к формату, похожему на новые (для объединения)
+      const formattedLegacyReviews = legacyReviews.map((legacyReview: any, index: number) => ({
+        id: `legacy-${expert.id}-${index}`,
+        expertId: expert.id,
+        text: legacyReview.text || '',
+        rating: null,
+        authorName: 'Гость',
+        status: 'approved',
+        expertReply: legacyReview.expertReply || null,
+        expertName: expert.name,
+        createdAt: legacyReview.date ? new Date(legacyReview.date) : expert.createdAt,
+        updatedAt: legacyReview.date ? new Date(legacyReview.date) : expert.createdAt,
+        source: 'legacy',
+      }));
+      
+      // Объединяем старые и новые отзывы
+      const allReviews = [...formattedLegacyReviews, ...newReviews];
+      
       // Общее количество отзывов
-      const totalReviewsCount = legacyReviews.length + newReviews.length;
+      const totalReviewsCount = allReviews.length;
       
       return {
        id: expert.id,
@@ -495,7 +513,7 @@ async findAll() {
         createdAt: expert.createdAt,
         updatedAt: expert.updatedAt,
         alwaysAvailable: expert.alwaysAvailable,
-        reviews: legacyReviews, // сохраняем legacy формат для совместимости
+        reviews: allReviews, // объединенные старые и новые отзывы
         reviewsCount: totalReviewsCount // ← теперь учитывает оба источника
       };
     })

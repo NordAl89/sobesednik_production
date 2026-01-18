@@ -103,13 +103,32 @@ export class ReviewsService {
 
     // Получаем имя эксперта для добавления к каждому отзыву
     const expert = await this.expertsService.findOne(expertId);
-    const expertName = expert?.name || null;
+    let expertName = expert?.name || null;
+    
+    // Убираем префикс "Ответ " из expertName, если он есть
+    if (expertName && expertName.startsWith('Ответ ')) {
+      expertName = expertName.replace(/^Ответ\s+/, '');
+    }
 
-    // Добавляем expertName к каждому отзыву
-    return reviews.map(review => ({
-      ...review,
-      expertName,
-    }));
+    // Добавляем expertName к каждому отзыву и убираем "Ответ " из expertReply, если есть
+    return reviews.map(review => {
+      let cleanExpertReply = review.expertReply;
+      
+      // Убираем префикс "Ответ имя:" из expertReply, если он есть
+      if (cleanExpertReply && expertName) {
+        const prefixPattern = new RegExp(`^Ответ\\s+${expertName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}:?\\s*`, 'i');
+        cleanExpertReply = cleanExpertReply.replace(prefixPattern, '');
+      } else if (cleanExpertReply && cleanExpertReply.startsWith('Ответ ')) {
+        // Если нет expertName, просто убираем "Ответ " если это начало строки
+        cleanExpertReply = cleanExpertReply.replace(/^Ответ\s+[А-Яа-яЁё\s]+:?\s*/, '');
+      }
+      
+      return {
+        ...review,
+        expertName,
+        expertReply: cleanExpertReply,
+      };
+    });
   }
 
   /* =====================================================
