@@ -345,7 +345,7 @@ export class ReviewsService {
    * Обновляет рейтинг эксперта на основе комбинированных данных:
    * старые оценки из expert.ratings + рейтинги из legacy отзывов + новые APPROVED отзывы
    */
-  private async updateExpertRating(expertId: string): Promise<void> {
+  async updateExpertRating(expertId: string): Promise<void> {
     try {
       const expert = await this.expertsService.findOne(expertId);
 
