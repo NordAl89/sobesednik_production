@@ -72,43 +72,7 @@ export class ReviewsController {
   async getApprovedReviews(
     @Param('expertId') expertId: string,
   ) {
-    // Получаем новые APPROVED отзывы из таблицы reviews
-    const newReviews = await this.reviewsService.getApprovedReviewsForExpert(expertId);
-    
-    // Получаем эксперта для доступа к legacy отзывам
-    const expert = await this.reviewsService['expertsService'].findOne(expertId);
-    
-    // Парсим старые отзывы из JSON строки
-    let legacyReviews = [];
-    if (expert?.reviews) {
-      try {
-        const parsed = JSON.parse(expert.reviews);
-        legacyReviews = Array.isArray(parsed) ? parsed : [];
-      } catch (e) {
-        console.warn(`Ошибка парсинга legacy отзывов для эксперта ${expertId}`);
-        legacyReviews = [];
-      }
-    }
-    
-    // Преобразуем старые отзывы к формату, похожему на новые (для объединения)
-    const formattedLegacyReviews = legacyReviews.map((legacyReview: any, index: number) => ({
-      id: `legacy-${expertId}-${index}`,
-      expertId: expertId,
-      text: legacyReview.text || '',
-      rating: legacyReview.rating || null,
-      authorName: 'Гость',
-      status: 'approved',
-      expertReply: legacyReview.expertReply || null,
-      expertName: expert?.name || null,
-      createdAt: legacyReview.date ? new Date(legacyReview.date) : (expert?.createdAt || new Date()),
-      updatedAt: legacyReview.date ? new Date(legacyReview.date) : (expert?.createdAt || new Date()),
-      source: 'legacy',
-    }));
-    
-    // Объединяем старые и новые отзывы
-    const allReviews = [...formattedLegacyReviews, ...newReviews];
-    
-    return allReviews;
+    return this.reviewsService.getAllApprovedReviewsForExpert(expertId);
   }
 
   /**
