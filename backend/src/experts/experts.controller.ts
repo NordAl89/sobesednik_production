@@ -453,7 +453,7 @@ async findAll() {
   
   // Получаем новые отзывы для всех экспертов параллельно
   const expertsWithReviews = await Promise.all(
-    experts.map(async (expert) => {
+    experts.map(async (expert, expertIndex) => {
       // Парсим старые отзывы из JSON
       let legacyReviews = [];
       if (expert.reviews) {
@@ -491,7 +491,6 @@ async findAll() {
       const totalReviewsCount = Number(allReviews.length) || 0;
       
       // Логирование для отладки (первые 3 эксперта)
-      const expertIndex = experts.indexOf(expert);
       if (expertIndex < 3) {
         console.log(`📊 Эксперт ${expert.name} (ID: ${expert.id}): legacy=${legacyReviews.length}, new=${newReviews.length}, total=${totalReviewsCount}`);
       }
