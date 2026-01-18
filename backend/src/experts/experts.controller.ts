@@ -471,7 +471,12 @@ async findAll() {
       
       // Дополнительное логирование для Константина Северьянова (ID: 6209828459)
       if (expert.id === '6209828459') {
-        console.log(`🔍 ОТЛАДКА: Константин Северьянов - legacy=${legacyReviews.length}, approved=${newReviews.length}, reviews JSON:`, expert.reviews);
+        console.log(`🔍 ОТЛАДКА Константин Северьянов (ID: ${expert.id}):`);
+        console.log(`  - expert.reviews (RAW):`, expert.reviews);
+        console.log(`  - legacyReviews (parsed):`, legacyReviews.length, legacyReviews);
+        console.log(`  - newReviews (from DB, APPROVED only):`, newReviews.length, newReviews.map(r => ({ id: r.id, status: r.status, text: r.text?.substring(0, 50) })));
+        console.log(`  - allReviews:`, allReviews.length);
+        console.log(`  - totalReviewsCount:`, totalReviewsCount);
       }
       
       // Преобразуем старые отзывы к формату, похожему на новые (для объединения)
