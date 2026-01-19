@@ -14,8 +14,8 @@
         />
       </div>
 
-      <button type="submit" class="submit-btn">
-        Отправить
+      <button type="submit" class="submit-btn" :disabled="loading">
+        {{ loading ? 'Отправка...' : 'Отправить' }}
       </button>
     </form>
 
@@ -43,10 +43,10 @@
         </p>
 
         <div class="modal-actions">
-          <button class="btn-confirm" @click="submitReview" :disabled="!form.rating">
-            Подтвердить
+          <button class="btn-confirm" @click="submitReview" :disabled="!form.rating || loading">
+            {{ loading ? 'Отправка...' : 'Подтвердить' }}
           </button>
-          <button class="btn-cancel" @click="closeModal">
+          <button class="btn-cancel" @click="closeModal" :disabled="loading">
             Отмена
           </button>
         </div>
@@ -83,6 +83,7 @@ const config = useRuntimeConfig()
 
 const showRatingModal = ref(false)
 const hoverRating = ref(0)
+const loading = ref(false)
 
 const openRatingModal = () => {
   if (!form.value.text.trim()) return
@@ -94,9 +95,10 @@ const closeModal = () => {
   form.value.rating = 0
 }
 
-
 const submitReview = async () => {
   if (!form.value.text.trim()) return
+
+  loading.value = true
 
   try {
     await $fetch(`${config.public.apiBase}/reviews`, {
@@ -113,7 +115,7 @@ const submitReview = async () => {
     form.value.text = ''
     form.value.rating = 0
 
-    console.log('✅ Отзыв успешно отправлен')
+    console.log('✅ Отзыв успешно отправлен на модерацию')
 
     emit('submitted')
     
@@ -122,6 +124,24 @@ const submitReview = async () => {
     
   } catch (error) {
     console.error('❌ Ошибка при отправке отзыва:', error)
+    
+    // Тихая обработка ошибки IP - просто закрываем модальное окно без показа ошибки
+    const errorMessage = error?.data?.message || error?.response?.data?.message || error?.message || ''
+    
+    if (errorMessage.includes('24 часа') || errorMessage.includes('оставляли отзыв')) {
+      // Тихо закрываем модальное окно, не показывая ошибку пользователю
+      closeModal()
+      // Очищаем форму
+      form.value.text = ''
+      form.value.rating = 0
+    } else {
+      // Для других ошибок просто закрываем
+      closeModal()
+      form.value.text = ''
+      form.value.rating = 0
+    }
+  } finally {
+    loading.value = false
   }
 }
 </script>

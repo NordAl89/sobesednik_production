@@ -79,7 +79,7 @@ export class ReviewsService {
       rating: dto.rating ?? null,
       authorName: 'Гость',
       authorIpHash: ipHash,
-      status: ReviewStatus.APPROVED, // Создаем сразу одобренными для автоматической публикации
+      status: ReviewStatus.PENDING, // Отзывы попадают на модерацию
       source: ReviewSource.V2,
     });
 
@@ -124,8 +124,8 @@ export class ReviewsService {
       }
       
       return {
-        ...review,
-        expertName,
+      ...review,
+      expertName,
         expertReply: cleanExpertReply,
       };
     });

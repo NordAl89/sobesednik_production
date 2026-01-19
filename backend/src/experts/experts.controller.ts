@@ -456,11 +456,11 @@ async findAll() {
     experts.map(async (expert, expertIndex) => {
       // Парсим старые отзывы из JSON
       let legacyReviews = [];
-      if (expert.reviews) {
-        try {
+    if (expert.reviews) {
+      try {
           const parsed = JSON.parse(expert.reviews);
           legacyReviews = Array.isArray(parsed) ? parsed : [];
-        } catch (e) {
+      } catch (e) {
           console.warn(`⚠️ Ошибка парсинга отзывов для эксперта ${expert.id} (${expert.name}):`, e instanceof Error ? e.message : String(e));
           legacyReviews = [];
         }
@@ -556,35 +556,35 @@ async findAll() {
       // Логирование для отладки (только первые 3 эксперта)
       if (expertIndex < 3) {
         console.log(`📊 Эксперт ${expert.name} (ID: ${expert.id}): legacy=${legacyReviews.length}, new=${newReviews.length}, total=${totalReviewsCount}`);
-      }
-      
-      return {
-       id: expert.id,
-        login: expert.login,
-        name: expert.name,
-        age: expert.age,
-        gender: expert.gender,
-        availability: expert.availability,
-        about: expert.about,
-        price: expert.price,
-        mainPhotoUrl: expert.mainPhotoUrl,
-        rating: expert.rating,
-        totalSessions: expert.totalSessions,
-        status: expert.status,
-        adminVerified: expert.adminVerified,
-        expertIsVerified: expert.expertIsVerified,
-        telegram: expert.telegram,
-        otherMessengers: expert.otherMessengers,
-        allowedTopics: expert.allowedTopics,
-        forbiddenTopics: expert.forbiddenTopics,
-        adultTopics: expert.adultTopics,
-        noForbiddenTopics: expert.noForbiddenTopics,
-        createdAt: expert.createdAt,
-        updatedAt: expert.updatedAt,
-        alwaysAvailable: expert.alwaysAvailable,
+    }
+    
+    return {
+     id: expert.id,
+      login: expert.login,
+      name: expert.name,
+      age: expert.age,
+      gender: expert.gender,
+      availability: expert.availability,
+      about: expert.about,
+      price: expert.price,
+      mainPhotoUrl: expert.mainPhotoUrl,
+      rating: expert.rating,
+      totalSessions: expert.totalSessions,
+      status: expert.status,
+      adminVerified: expert.adminVerified,
+      expertIsVerified: expert.expertIsVerified,
+      telegram: expert.telegram,
+      otherMessengers: expert.otherMessengers,
+      allowedTopics: expert.allowedTopics,
+      forbiddenTopics: expert.forbiddenTopics,
+      adultTopics: expert.adultTopics,
+      noForbiddenTopics: expert.noForbiddenTopics,
+      createdAt: expert.createdAt,
+      updatedAt: expert.updatedAt,
+      alwaysAvailable: expert.alwaysAvailable,
         reviews: allReviews, // объединенные старые и новые отзывы
         reviewsCount: totalReviewsCount // ← теперь учитывает оба источника
-      };
+    };
     })
   );
   
