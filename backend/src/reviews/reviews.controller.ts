@@ -86,6 +86,23 @@ export class ReviewsController {
   }
 
   /**
+   * Пересчет рейтинга конкретного эксперта
+   */
+  @Post('expert/:expertId/recalculate-rating')
+  async recalculateExpertRating(
+    @Param('expertId') expertId: string,
+  ) {
+    await this.reviewsService.updateExpertRating(expertId);
+    const expert = await this.reviewsService['expertsService'].findOne(expertId);
+    return {
+      message: `Рейтинг эксперта ${expertId} пересчитан`,
+      expertId,
+      rating: expert.rating,
+      ratingCount: expert.ratingCount,
+    };
+  }
+
+  /**
    * Пересчет рейтингов всех экспертов (учитывает рейтинги из legacy отзывов)
    * Использовать один раз для обновления всех рейтингов
    */
