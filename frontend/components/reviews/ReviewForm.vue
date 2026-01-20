@@ -42,6 +42,9 @@
           Ваша оценка: {{ form.rating }} ★
         </p>
 
+        <div v-if="errorMessage" class="error-message">
+          {{ errorMessage }}
+        </div>
         <div class="modal-actions">
           <button class="btn-confirm" @click="submitReview" :disabled="!form.rating || loading">
             {{ loading ? 'Отправка...' : 'Подтвердить' }}
@@ -84,6 +87,7 @@ const config = useRuntimeConfig()
 const showRatingModal = ref(false)
 const hoverRating = ref(0)
 const loading = ref(false)
+const errorMessage = ref('')
 
 const openRatingModal = () => {
   if (!form.value.text.trim()) return
@@ -93,6 +97,7 @@ const openRatingModal = () => {
 const closeModal = () => {
   showRatingModal.value = false
   form.value.rating = 0
+  errorMessage.value = ''
 }
 
 const submitReview = async () => {
@@ -125,21 +130,12 @@ const submitReview = async () => {
   } catch (error) {
     console.error('❌ Ошибка при отправке отзыва:', error)
     
-    // Тихая обработка ошибки IP - просто закрываем модальное окно без показа ошибки
-    const errorMessage = error?.data?.message || error?.response?.data?.message || error?.message || ''
+    // Показываем сообщение об ошибке пользователю
+    const message = error?.data?.message || error?.response?.data?.message || error?.message || 'Произошла ошибка при отправке отзыва'
+    errorMessage.value = message
     
-    if (errorMessage.includes('24 часа') || errorMessage.includes('оставляли отзыв')) {
-      // Тихо закрываем модальное окно, не показывая ошибку пользователю
-      closeModal()
-      // Очищаем форму
-      form.value.text = ''
-      form.value.rating = 0
-    } else {
-      // Для других ошибок просто закрываем
-      closeModal()
-      form.value.text = ''
-      form.value.rating = 0
-    }
+    // Не закрываем модальное окно, чтобы пользователь видел ошибку
+    // Очищаем форму только при успешной отправке
   } finally {
     loading.value = false
   }
@@ -260,5 +256,15 @@ select {
 } 
 .btn-cancel:hover {
   background: #b3b3b3;
+}
+
+.error-message {
+  color: #e74c3c;
+  background: #ffeaea;
+  padding: 0.75rem;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+  border: 1px solid #e74c3c;
 }
 </style>
