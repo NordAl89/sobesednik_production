@@ -21,6 +21,7 @@
           <li><NuxtLink to="/" @click="closeMenu">Главная</NuxtLink></li>
           <li><NuxtLink to="/become-expert" @click="closeMenu">Стать собеседником</NuxtLink></li>
           <li><NuxtLink to="/about" @click="closeMenu">О нас</NuxtLink></li>
+          <!-- <li><NuxtLink to="/blog" @click="closeMenu">Блог</NuxtLink></li> -->
 
           <li v-if="!store.isLoggedIn">
             <NuxtLink to="/expert-login" @click="closeMenu">Вход для экспертов</NuxtLink>

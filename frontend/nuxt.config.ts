@@ -76,14 +76,28 @@ export default defineNuxtConfig({
   async urls() {
     try {
       const apiBase = process.env.NUXT_PUBLIC_API_BASE || 'https://sobesednik-na-chas.ru/api'
+      
+      // 👤 Эксперты
       const experts = await fetch(`${apiBase}/experts`).then(res => res.json())
 
-      return experts.map((expert: any) => ({
+      const expertUrls = experts.map((expert: any) => ({
         loc: `/experts/${expert.id}`,
         changefreq: 'weekly',
         priority: 0.8,
-        lastmod: expert.updatedAt || expert.createdAt
+        lastmod: expert.updatedAt || expert.createdAt,
       }))
+
+    // 📰 Блог
+      const posts = await fetch(`${apiBase}/blog`).then(res => res.json())
+
+      const blogUrls = posts.map((post: any) => ({
+        loc: `/blog/${post.slug}`,
+        changefreq: 'monthly',
+        priority: 0.7,
+        lastmod: post.updatedAt || post.createdAt,
+      }))
+
+      return [...expertUrls, ...blogUrls]
     } catch (error) {
       console.error('Ошибка генерации sitemap для экспертов:', error)
       return []
@@ -133,6 +147,7 @@ export default defineNuxtConfig({
       link: [
         { rel: "canonical", href: "https://sobesednik-na-chas.ru" }, // Замените на ваш домен
         { rel: "icon", type: "image/x-icon", href: "/favicon.ico" },
+        { rel: "alternate", type: "application/rss+xml", title: "RSS — Блог «Собеседник на час»", href: "https://sobesednik-na-chas.ru/rss.xml" },
       ],
       htmlAttrs: {
         lang: "ru",

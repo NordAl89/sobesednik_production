@@ -8,9 +8,19 @@ import { join } from 'path';
 import * as express from 'express';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import * as cookieParser from 'cookie-parser';
+import { RequestMethod } from '@nestjs/common'; //изменение для блога
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  //Изменение для блога
+  app.setGlobalPrefix('api', {
+    exclude: [
+      {
+        path: 'rss.xml',
+        method: RequestMethod.GET,
+      },
+    ],
+  });
 
   // ✅ Cookie parser для админ-аутентификации
   app.use(cookieParser());

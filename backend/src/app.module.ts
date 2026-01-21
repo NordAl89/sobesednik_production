@@ -5,9 +5,12 @@ import { AppController } from './app.controller';
 import { ExpertsModule } from './experts/experts.module';
 import { AdminModule } from './admin/admin.module';
 import { ReviewsModule } from './reviews/reviews.module';
+import { BlogModule } from './blog/blog.module';
+import { RssController } from './rss/rss.controller';
 
 @Module({
   imports: [
+    BlogModule,
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: '.env',
@@ -23,7 +26,7 @@ import { ReviewsModule } from './reviews/reviews.module';
     AdminModule,
     ReviewsModule,
   ],
-  controllers: [AppController],
+  controllers: [AppController, RssController],
   providers: [],
 })
 export class AppModule {}
