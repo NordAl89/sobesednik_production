@@ -75,7 +75,10 @@ export default defineNuxtConfig({
 
   async urls() {
     try {
-      const apiBase = process.env.NUXT_PUBLIC_API_BASE || 'https://sobesednik-na-chas.ru/api'
+      const apiBase =
+      process.env.NUXT_SITEMAP_API_BASE ||
+      process.env.NUXT_PUBLIC_API_BASE ||
+      'http://localhost:4000/api'
       
       // 👤 Эксперты
       const experts = await fetch(`${apiBase}/experts`).then(res => res.json())
@@ -86,7 +89,7 @@ export default defineNuxtConfig({
         priority: 0.8,
         lastmod: expert.updatedAt || expert.createdAt,
       }))
-
+      
     // 📰 Блог
       const posts = await fetch(`${apiBase}/blog`).then(res => res.json())
 
