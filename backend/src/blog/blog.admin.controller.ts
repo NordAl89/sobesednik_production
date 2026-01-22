@@ -4,6 +4,7 @@ import {
   Body,
   UseGuards,
   Param,
+  Delete,
   ParseIntPipe,
   UploadedFile,
   UseInterceptors,
@@ -56,5 +57,10 @@ export class BlogAdminController {
 
     const imagePath = `/uploads/blog/${file.filename}`;
     return this.blogService.updateImage(id, imagePath);
+  }
+  //удаляем статью из блога
+   @Delete(':id')
+  remove(@Param('id', ParseIntPipe) id: number) {
+    return this.blogService.remove(id);
   }
 }
