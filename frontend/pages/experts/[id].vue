@@ -15,7 +15,8 @@
     <div class="main-info">
       <img :src="getImageUrl(expert.mainPhotoUrl) || getDefaultAvatar()" alt="Фото собеседника" class="main-photo" />
       <div class="details">
-        <h1>{{ expert.name }}</h1>
+        <h1>Собеседник на час</h1>
+        <h2>{{ expert.name }}</h2>
         <!-- Отображение рейтинга с частичными звездами -->
         <div class="rating-header">
           <div class="stars-display">
@@ -507,6 +508,11 @@ onMounted(fetchExpert)
   margin: 0 0 1rem 0;
   color: #2c3e50;
   font-size: 2rem;
+}
+.details h2 {
+  margin: 0 0 1rem 0;
+  color: #2c3e50;
+  
 }
 
 .details p {
