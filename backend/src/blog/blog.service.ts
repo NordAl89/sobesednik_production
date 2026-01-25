@@ -46,7 +46,11 @@ export class BlogService {
 async remove(id: number) {
   return this.blogRepository.delete(id);
 }
-
+//редактирование статьи
+async update(id: number, dto: Partial<CreateBlogPostDto>) {
+  await this.blogRepository.update(id, dto);
+  return this.findById(id);
+}
 async findById(id: number) {
   return this.blogRepository.findOne({ where: { id } });
 }

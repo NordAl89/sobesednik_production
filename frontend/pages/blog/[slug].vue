@@ -148,5 +148,8 @@ useHead(() => ({
   margin-bottom: 16px;
 }
 
-
+img {
+  max-width: 800px;
+  height: auto;
+}
 </style>

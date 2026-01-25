@@ -5,6 +5,7 @@ import {
   UseGuards,
   Param,
   Delete,
+  Patch,
   ParseIntPipe,
   UploadedFile,
   UseInterceptors,
@@ -62,5 +63,11 @@ export class BlogAdminController {
    @Delete(':id')
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.blogService.remove(id);
+  }
+
+  //редактируем статью
+  @Patch(':id')
+  update(@Param('id', ParseIntPipe) id: number, @Body() dto: CreateBlogPostDto) {
+    return this.blogService.update(id, dto);
   }
 }
