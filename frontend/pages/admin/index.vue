@@ -221,7 +221,9 @@ const extendDays = ref(1)
 const extendExpertId = ref(null)
 const extendLoading = ref(false)
 
-
+definePageMeta({
+  middleware: 'admin-auth'
+})
 // Загрузка экспертов
 const loadExperts = async () => {
   loading.value = true
