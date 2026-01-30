@@ -28,6 +28,7 @@ export class BlogService {
       'slug',
       'excerpt',
       'image',
+      'imageAlt',
       'createdAt',
     ], // контент не отдаём в списке
   });
@@ -55,9 +56,13 @@ async findById(id: number) {
   return this.blogRepository.findOne({ where: { id } });
 }
 
-async updateImage(id: number, image: string) {
-  await this.blogRepository.update(id, { image });
+async updateImage(id: number, image: string, alt?: string) {
+  await this.blogRepository.update(id, {
+    image,
+    imageAlt: alt || null,
+  });
   return this.findById(id);
 }
+
 
 }

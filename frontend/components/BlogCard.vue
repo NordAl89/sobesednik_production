@@ -4,7 +4,7 @@
       v-if="post.image"
       :src="`${config.public.fileBase}${post.image}`"
       class="blog-card__image"
-      alt=""
+      :alt="post.imageAlt || post.title"
     />
 
     <div class="blog-card__content">

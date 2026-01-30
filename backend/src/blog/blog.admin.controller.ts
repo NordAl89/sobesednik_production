@@ -30,35 +30,36 @@ export class BlogAdminController {
   }
 
   // ✅ ЗАГРУЗКА ОБЛОЖКИ
-  @Post(':id/image')
-  @UseInterceptors(
-    FileInterceptor('image', {
-      storage: diskStorage({
-        destination: './uploads/blog',
-        filename: (_, file, cb) => {
-          const uniqueName =
-            'cover-' + Date.now() + extname(file.originalname);
-          cb(null, uniqueName);
-        },
-      }),
+ @Post(':id/image')
+@UseInterceptors(
+  FileInterceptor('image', {
+    storage: diskStorage({
+      destination: './uploads/blog',
+      filename: (_, file, cb) => {
+        const uniqueName = 'cover-' + Date.now() + extname(file.originalname);
+        cb(null, uniqueName);
+      },
     }),
-  )
-  async uploadImage(
-    @Param('id', ParseIntPipe) id: number,
-    @UploadedFile() file: Express.Multer.File,
-  ) {
-    if (!file) {
-      throw new Error('Файл не загружен');
-    }
-
-    const post = await this.blogService.findById(id);
-    if (!post) {
-      throw new NotFoundException('Статья не найдена');
-    }
-
-    const imagePath = `/uploads/blog/${file.filename}`;
-    return this.blogService.updateImage(id, imagePath);
+  }),
+)
+async uploadImage(
+  @Param('id', ParseIntPipe) id: number,
+  @UploadedFile() file: Express.Multer.File,
+  @Body('alt') alt: string,
+) {
+  if (!file) {
+    throw new Error('Файл не загружен');
   }
+
+  const post = await this.blogService.findById(id);
+  if (!post) {
+    throw new NotFoundException('Статья не найдена');
+  }
+
+  const imagePath = `/uploads/blog/${file.filename}`;
+  return this.blogService.updateImage(id, imagePath, alt);
+}
+
   //удаляем статью из блога
    @Delete(':id')
   remove(@Param('id', ParseIntPipe) id: number) {

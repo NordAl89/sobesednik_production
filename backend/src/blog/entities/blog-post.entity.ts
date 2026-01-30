@@ -30,6 +30,9 @@ export class BlogPost {
 
   @Column({ default: true })
   published: boolean;
+  
+  @Column({ nullable: true })
+  imageAlt: string;
 
   @CreateDateColumn()
   createdAt: Date;
