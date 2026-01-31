@@ -71,21 +71,36 @@ export default defineNuxtConfig({
     '/admin-login',
     '/expert-login',
     '/expert-reset',
+    '/become-expert',
+    '/expert-profile/**'
   ],
 
   async urls() {
     try {
       const apiBase = process.env.NUXT_PUBLIC_API_BASE || 'https://sobesednik-na-chas.ru/api'
-      const experts = await fetch(`${apiBase}/experts`).then(res => res.json())
 
-      return experts.map((expert: any) => ({
-        loc: `/experts/${expert.id}`,
-        changefreq: 'weekly',
-        priority: 0.8,
-        lastmod: expert.updatedAt || expert.createdAt
-      }))
+      const [experts, posts] = await Promise.all([
+        fetch(`${apiBase}/experts`).then(r => r.json()),
+        fetch(`${apiBase}/blog`).then(r => r.json()),
+      ])
+
+      return [
+        ...experts.map((expert: any) => ({
+          loc: `/experts/${expert.id}`,
+          changefreq: 'weekly',
+          priority: 0.8,
+          lastmod: expert.updatedAt || expert.createdAt
+        })),
+
+        ...posts.map((post: any) => ({
+          loc: `/blog/${post.slug}`,
+          changefreq: 'monthly',
+          priority: 0.6,
+          lastmod: post.updatedAt
+        }))
+      ]
     } catch (error) {
-      console.error('Ошибка генерации sitemap для экспертов:', error)
+      console.error('Ошибка генерации sitemap:', error)
       return []
     }
   }
