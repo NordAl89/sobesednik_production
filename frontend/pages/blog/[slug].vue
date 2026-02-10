@@ -1,14 +1,33 @@
 <template>
-  <div class="blog-post">
+  <div class="blog-post"  ref="blogPostRef">
      <NuxtLink to="/blog" class="back-link">
       ← К списку статей
-    </NuxtLink>
-    <h1>{{ post.title }}</h1>
+    </NuxtLink>    
     <div v-html="post.content"></div>
+    <!-- CTA в конце статьи -->
+    <div class="article-cta">
+      <p>Познакомьтесь с нашими собеседниками — переходите по ссылке ниже.</p>
+      <NuxtLink to="/" class="cta-button">
+        Посмотреть собеседников
+      </NuxtLink>
+      
+       
+    </div>
+<ScrollStopper ref="stopperRef" />
+      <ScrollTopButton 
+      :stopper-ref="stopperRef" 
+      :parent-ref="blogPostRef" 
+    />
+    
   </div>
 </template>
 
 <script setup>
+import { ref, } from 'vue'
+
+const stopperRef = ref(null)
+const blogPostRef = ref(null)
+
 const route = useRoute()
 const config = useRuntimeConfig()
 
@@ -113,11 +132,18 @@ useHead(() => ({
     : [],
 }))
 
+const scrollToTop = () => {
+  window.scrollTo({
+    top: 0,
+    behavior: 'smooth',
+  })
+}
 
 
 </script>
 <style scoped>
 .blog-post {
+  position: relative;
   max-width: 800px;
   margin: 0 auto;
   padding: 32px 16px;
@@ -152,4 +178,33 @@ img {
   max-width: 800px;
   height: auto;
 }
+
+.article-cta {
+  margin-top: 48px;
+  padding-top: 32px;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.article-cta p {
+  font-size: 16px;
+  margin-bottom: 16px;
+}
+
+.cta-button {
+  display: inline-block;
+  padding: 12px 24px;
+  background-color: #6157eb;
+  color: #fff;
+  text-decoration: none;
+  border-radius: 24px;
+  font-size: 14px;
+  transition: background-color 0.2s ease;
+}
+
+.cta-button:hover {
+  background-color: #3f35c5;
+}
+
+
 </style>
