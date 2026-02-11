@@ -75,53 +75,60 @@
       <!-- Новые отзывы (из таблицы reviews) с возможностью ответа -->
       <div class="reviews-section" v-if="newReviews.length > 0">
         <h3>Отзывы на вашей странице</h3>
+        <!-- Кнопка для показа/скрытия отзывов -->
+        <button v-if="newReviews.length > 0" @click="toggleVisibility" class="toggle-btn">
+          {{ visible ? 'Скрыть отзывы' : 'Показать отзывы' }}
+        </button>
+        <transition  @enter="enter" @leave="leave">
+          <div v-if="visible" class="reviews-list">
 
-        <div class="reviews-list">
-          <div v-for="review in newReviews" :key="review.id" class="review-item">
-            <div class="review-content">
-              <div class="review-header">
-                <span class="review-author">{{ review.authorName }}</span>
-                <span class="review-date">{{ formatDate(review.createdAt) }}</span>
+            <div v-for="review in newReviews" :key="review.id" class="review-item">
+
+              <div class="review-content">
+                <div class="review-header">
+                  <span class="review-author">{{ review.authorName }}</span>
+                  <span class="review-date">{{ formatDate(review.createdAt) }}</span>
+                </div>
+
+                <div v-if="review.rating" class="review-rating">
+                  <span v-for="star in 5" :key="star" class="star" :class="{ active: star <= review.rating }">
+                    ★
+                  </span>
+                </div>
+
+                <p class="review-text">{{ review.text }}</p>
+
+                <!-- Ответ эксперта (если есть) -->
+                <div v-if="review.expertReply" class="expert-reply-display">
+                  <strong>Ваш ответ:</strong>
+                  <p>{{ review.expertReply }}</p>
+                  <small class="reply-date">{{ formatDate(review.repliedAt) }}</small>
+                </div>
               </div>
 
-              <div v-if="review.rating" class="review-rating">
-                <span v-for="star in 5" :key="star" class="star" :class="{ active: star <= review.rating }">
-                  ★
-                </span>
-              </div>
+              <!-- Форма ответа (если ответа еще нет) -->
+              <div v-if="!review.expertReply" class="reply-section">
+                <button v-if="!replyingReviews[review.id]" @click="startReplying(review.id)" class="reply-btn">
+                  💬 Ответить
+                </button>
 
-              <p class="review-text">{{ review.text }}</p>
-
-              <!-- Ответ эксперта (если есть) -->
-              <div v-if="review.expertReply" class="expert-reply-display">
-                <strong>Ваш ответ:</strong>
-                <p>{{ review.expertReply }}</p>
-                <small class="reply-date">{{ formatDate(review.repliedAt) }}</small>
-              </div>
-            </div>
-
-            <!-- Форма ответа (если ответа еще нет) -->
-            <div v-if="!review.expertReply" class="reply-section">
-              <button v-if="!replyingReviews[review.id]" @click="startReplying(review.id)" class="reply-btn">
-                💬 Ответить
-              </button>
-
-              <div v-else class="reply-form">
-                <textarea v-model="replyTexts[review.id]" placeholder="Ваш ответ на отзыв..." rows="3"
-                  class="reply-textarea"></textarea>
-                <div class="reply-actions">
-                  <button @click="submitReply(review.id)" class="submit-reply-btn"
-                    :disabled="!replyTexts[review.id]?.trim()">
-                    Отправить
-                  </button>
-                  <button @click="cancelReply(review.id)" class="cancel-reply-btn">
-                    Отмена
-                  </button>
+                <div v-else class="reply-form">
+                  <textarea v-model="replyTexts[review.id]" placeholder="Ваш ответ на отзыв..." rows="3"
+                    class="reply-textarea"></textarea>
+                  <div class="reply-actions">
+                    <button @click="submitReply(review.id)" class="submit-reply-btn"
+                      :disabled="!replyTexts[review.id]?.trim()">
+                      Отправить
+                    </button>
+                    <button @click="cancelReply(review.id)" class="cancel-reply-btn">
+                      Отмена
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
+        </transition>
       </div>
 
       <p v-if="newReviewsLoading" class="loading-reviews">
@@ -311,6 +318,42 @@ const submitReply = async (reviewId) => {
     alert('Не удалось отправить ответ. Попробуйте снова.');
   }
 };
+
+const visible = ref(false) // состояние видимости списка отзывов
+// Функция для показа/скрытия отзывов
+const toggleVisibility = () => {
+  visible.value = !visible.value
+}
+
+// Анимация показа/скрытия озывов
+const enter = (el) => {
+  el.style.height = '0'
+  el.style.opacity = '0'
+  el.style.overflow = 'hidden'
+  const height = el.scrollHeight
+  requestAnimationFrame(() => {
+    el.style.transition = 'height 1s ease, opacity 1s ease'
+    el.style.height = height + 'px'
+    el.style.opacity = '1'
+  })
+  el.addEventListener('transitionend', function handler() {
+    el.style.height = 'auto'
+    el.style.transition = ''
+    el.style.overflow = ''
+    el.removeEventListener('transitionend', handler)
+  })
+}
+
+const leave = (el) => {
+  el.style.height = el.scrollHeight + 'px'
+  el.style.opacity = '1'
+  el.style.overflow = 'hidden'
+  requestAnimationFrame(() => {
+    el.style.transition = 'height 1s ease, opacity 1s ease'
+    el.style.height = '0'
+    el.style.opacity = '0'
+  })
+}
 
 // Загрузка данных эксперта
 onMounted(async () => {
@@ -842,7 +885,7 @@ const deleteReview = async (reviewIndex) => {
 
 .reply-form {
   margin-top: 0.5rem;
-  width: 100%;  
+  width: 100%;
 }
 
 .reply-textarea {
@@ -1131,6 +1174,22 @@ const deleteReview = async (reviewIndex) => {
   text-align: center;
   padding: 50px;
   color: #ff4757;
+}
+
+.toggle-btn {
+  margin: 1rem 0;
+  padding: 0.5rem 1rem;
+  background: #3498db;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.2s;
+}
+
+.toggle-btn:hover {
+  background: #2980b9;
 }
 
 /* Адаптивность */

@@ -1,8 +1,12 @@
 <template>
   <section class="reviews-list">
-    
+
     <!-- Форма для добавления отзыва -->
     <ReviewForm :expertId="expertId" />
+    <!-- Кнопка для показа/скрытия отзывов -->
+    <button v-if="reviews.length > 0" @click="toggleVisibility" class="toggle-btn">
+      {{ visible ? 'Скрыть отзывы' : 'Показать отзывы' }}
+    </button>
     <!-- Загрузка -->
     <p v-if="loading" class="loading">
       Загрузка отзывов…
@@ -13,43 +17,36 @@
       Пока нет отзывов. Будьте первым!
     </p>
 
-    <!-- Список отзывов -->
-    <div v-else class="list">
-      <article
-        v-for="review in reviews"
-        :key="review.id"
-        class="review-card"
-      >
-        <!-- Заголовок -->
-        <div class="header">
-          <span class="author">{{ review.authorName }}</span>
-          <span class="date">{{ formatDate(review.createdAt) }}</span>
-        </div>
+    <transition name="slide-fade" @enter="enter" @leave="leave">
+      <div v-if="visible" class="list">
+        <article v-for="review in reviews" :key="review.id" class="review-card">
+          <!-- Заголовок -->
+          <div class="header">
+            <span class="author">{{ review.authorName }}</span>
+            <span class="date">{{ formatDate(review.createdAt) }}</span>
+          </div>
 
-        <!-- Рейтинг -->
-        <div v-if="review.rating" class="rating">
-          <span
-            v-for="star in 5"
-            :key="star"
-            class="star"
-            :class="{ active: star <= review.rating }"
-          >
-            ★
-          </span>
-        </div>
+          <!-- Рейтинг -->
+          <div v-if="review.rating" class="rating">
+            <span v-for="star in 5" :key="star" class="star" :class="{ active: star <= review.rating }">
+              ★
+            </span>
+          </div>
 
-        <!-- Текст -->
-        <p class="text">
-          {{ review.text }}
-        </p>
+          <!-- Текст -->
+          <p class="text">
+            {{ review.text }}
+          </p>
 
-        <!-- Ответ эксперта -->
-        <div v-if="review.expertReply" class="expert-reply">
-          <strong>{{ review.expertName || 'собеседника' }}</strong>
-          <p>{{ review.expertReply }}</p>
-        </div>
-      </article>
-    </div>
+          <!-- Ответ эксперта -->
+          <div v-if="review.expertReply" class="expert-reply">
+            <strong>{{ review.expertName || 'собеседника' }}</strong>
+            <p>{{ review.expertReply }}</p>
+          </div>
+        </article>
+      </div>
+    </transition>
+
   </section>
 </template>
 
@@ -69,6 +66,7 @@ const props = defineProps({
 
 const reviews = ref([])
 const loading = ref(false)
+const visible = ref(false) // состояние видимости списка отзывов
 
 const config = useRuntimeConfig()
 
@@ -87,7 +85,10 @@ const fetchReviews = async () => {
     loading.value = false
   }
 }
-
+// Функция для показа/скрытия отзывов
+const toggleVisibility = () => {
+  visible.value = !visible.value
+}
 const formatDate = (date) => {
   return new Date(date).toLocaleDateString('ru-RU', {
     day: '2-digit',
@@ -102,6 +103,36 @@ watch(
   () => props.expertId,
   fetchReviews
 )
+// Анимация показа/скрытия озывов
+const enter = (el) => {
+  el.style.height = '0'
+  el.style.opacity = '0'
+  el.style.overflow = 'hidden'
+  const height = el.scrollHeight
+  requestAnimationFrame(() => {
+    el.style.transition = 'height 1s ease, opacity 1s ease'
+    el.style.height = height + 'px'
+    el.style.opacity = '1'
+  })
+  el.addEventListener('transitionend', function handler() {
+    el.style.height = 'auto'
+    el.style.transition = ''
+    el.style.overflow = ''
+    el.removeEventListener('transitionend', handler)
+  })
+}
+
+const leave = (el) => {
+  el.style.height = el.scrollHeight + 'px'
+  el.style.opacity = '1'
+  el.style.overflow = 'hidden'
+  requestAnimationFrame(() => {
+    el.style.transition = 'height 1s ease, opacity 1s ease'
+    el.style.height = '0'
+    el.style.opacity = '0'
+  })
+}
+
 </script>
 
 <style scoped>
@@ -183,4 +214,21 @@ watch(
 .expert-reply p {
   margin: 0.25rem 0 0;
 }
+
+.toggle-btn {
+  margin: 1rem 0;
+  padding: 0.5rem 1rem;
+  background: #3498db;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.2s;
+}
+
+.toggle-btn:hover {
+  background: #2980b9;
+}
+
 </style>
