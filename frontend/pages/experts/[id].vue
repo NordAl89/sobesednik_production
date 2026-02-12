@@ -13,7 +13,7 @@
 
     <!-- Главное фото и информация -->
     <div class="main-info">
-      <img :src="getImageUrl(expert.mainPhotoUrl) || getDefaultAvatar()" alt="Фото собеседника" class="main-photo" />
+      <img :src="getImageUrl(expert.mainPhotoUrl) || getDefaultAvatar()" :alt="`Собеседник на час ${expert.name.slice(0, 30)}`"  class="main-photo" />
       <div class="details">
         <h1>Собеседник на час</h1>
         <h2>{{ expert.name }}</h2>
